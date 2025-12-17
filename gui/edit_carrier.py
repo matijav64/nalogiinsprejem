@@ -1,0 +1,89 @@
+import tkinter as tk
+from tkinter import ttk, messagebox
+import sqlite3
+from db_manager import DatabaseManager
+from utils import unify_string
+
+class EditCarrierWindow(tk.Toplevel):
+    def __init__(self, master, db_manager: DatabaseManager, carrier_id):
+        super().__init__(master)
+        self.db = db_manager
+        self.carrier_id = carrier_id
+        self.title("Uredi prevoznika")
+
+        # Larger window
+        self.geometry("600x400")
+        self.minsize(600,400)
+        self.option_add("*Font", ("Segoe UI", 14))
+
+        self.bind("<Escape>", lambda e: self.destroy())
+
+        tk.Label(self, text="Ime:").grid(row=0, column=0, sticky="e", padx=5, pady=5)
+        self.e_name = tk.Entry(self, width=30)
+        self.e_name.grid(row=0, column=1, padx=5, pady=5)
+
+        tk.Label(self, text="Naslov:").grid(row=1, column=0, sticky="e", padx=5, pady=5)
+        self.e_address = tk.Entry(self, width=30)
+        self.e_address.grid(row=1, column=1, padx=5, pady=5)
+
+        tk.Label(self, text="Telefon:").grid(row=2, column=0, sticky="e", padx=5, pady=5)
+        self.e_phone = tk.Entry(self, width=30)
+        self.e_phone.grid(row=2, column=1, padx=5, pady=5)
+
+        tk.Label(self, text="E-mail:").grid(row=3, column=0, sticky="e", padx=5, pady=5)
+        self.e_email = tk.Entry(self, width=30)
+        self.e_email.grid(row=3, column=1, padx=5, pady=5)
+
+        tk.Label(self, text="Opombe:").grid(row=4, column=0, sticky="ne", padx=5, pady=5)
+        self.txt_notes = tk.Text(self, width=30, height=4)
+        self.txt_notes.grid(row=4, column=1, padx=5, pady=5)
+
+        btn_frame = tk.Frame(self)
+        btn_frame.grid(row=5, column=0, columnspan=2, pady=10)
+
+        btn_save = ttk.Button(btn_frame, text="Shrani", command=self.save_carrier)
+        btn_save.pack(side="left", padx=5)
+        btn_save.bind("<Return>", lambda e: btn_save.invoke())
+
+        btn_cancel = ttk.Button(btn_frame, text="Prekliči", command=self.destroy)
+        btn_cancel.pack(side="left", padx=5)
+        btn_cancel.bind("<Return>", lambda e: btn_cancel.invoke())
+
+        self.fill_data()
+
+    def fill_data(self):
+        with sqlite3.connect(self.db.db_path) as conn:
+            c = conn.cursor()
+            c.execute("SELECT name, address, phone, email, notes FROM carriers WHERE id=?", (self.carrier_id,))
+            row = c.fetchone()
+        if row:
+            self.e_name.insert(0, row[0] if row[0] else "")
+            self.e_address.insert(0, row[1] if row[1] else "")
+            self.e_phone.insert(0, row[2] if row[2] else "")
+            self.e_email.insert(0, row[3] if row[3] else "")
+            if row[4]:
+                self.txt_notes.insert("1.0", row[4])
+
+    def save_carrier(self):
+        name = unify_string(self.e_name.get().strip())
+        address = unify_string(self.e_address.get().strip())
+        phone = unify_string(self.e_phone.get().strip())
+        email = unify_string(self.e_email.get().strip())
+        notes = unify_string(self.txt_notes.get("1.0", "end").strip())
+        if not name:
+            messagebox.showerror("Napaka", "Ime je obvezno!")
+            return
+        with sqlite3.connect(self.db.db_path) as conn:
+            c = conn.cursor()
+            c.execute("""
+                UPDATE carriers
+                SET name = ?,
+                    address = ?,
+                    phone = ?,
+                    email = ?,
+                    notes = ?
+                WHERE id = ?
+            """, (name, address, phone, email, notes, self.carrier_id))
+            conn.commit()
+        messagebox.showinfo("OK", "Prevoznik posodobljen.")
+        self.destroy()
