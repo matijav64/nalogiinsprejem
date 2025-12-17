@@ -1,9 +1,23 @@
+import os
 import sqlite3
 from typing import List, Tuple
+from tkinter import messagebox
 
 class DatabaseManager:
     def __init__(self, db_path="sledenje.db"):
-        self.db_path = db_path
+        abs_path = os.path.abspath(db_path)
+        self.db_path = abs_path
+
+        print(f"Using DB: {abs_path}")
+
+        if not os.path.exists(abs_path):
+            warn_msg = f"Database does not exist and will be created: {abs_path}"
+            print(warn_msg)
+            try:
+                messagebox.showwarning("Podatkovna baza", warn_msg)
+            except Exception:
+                pass
+
         self.init_db()
 
     def init_db(self):
