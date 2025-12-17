@@ -219,5 +219,88 @@ class AddNalogWindow(tk.Toplevel):
             btn_x.pack(side="right", padx=3)
 
     def save_nalog(self):
-        # The rest of your saving logic (stock update, etc.)
-        ...
+        d_val = unify_string(self.e_datum.get().strip())
+        sub_val = unify_string(self.c_sub.get().strip())
+        lot_val = unify_string(self.c_mat.get().strip())
+        shape_val = unify_string(self.c_shape.get().strip())
+        qty_str = unify_string(self.e_kol.get().strip().replace(",", "."))
+
+        if not d_val or not sub_val or not lot_val or not shape_val or not qty_str:
+            messagebox.showerror("Napaka", "Izpolni vsa polja (datum, podkategorija, LOT, oblika, količina).")
+            return
+
+        if lot_val == "Ni podatkov":
+            messagebox.showerror("Napaka", "Izberi veljaven LOT.")
+            return
+
+        try:
+            dd, d_fmt = parse_datum(d_val)
+        except Exception:
+            messagebox.showerror("Napaka", "Napačen datum!")
+            return
+
+        try:
+            qty = float(qty_str)
+        except Exception:
+            messagebox.showerror("Napaka", "Količina mora biti številka.")
+            return
+
+        try:
+            lot_id = int(lot_val.split(")")[0])
+        except Exception:
+            messagebox.showerror("Napaka", "Izbrani LOT ni pravilen.")
+            return
+
+        # Generate code for new lot based on the selected shape and date
+        if "-" in shape_val:
+            lot_suffix = shape_val.split("-")[-1].strip()
+        else:
+            lot_suffix = shape_val.split()[-1] if shape_val.split() else ""
+        nov_lot = f"{lot_suffix}-{d_fmt}" if lot_suffix else d_fmt
+
+        with sqlite3.connect(self.db.db_path) as conn:
+            c = conn.cursor()
+
+            # Find the material type of the selected LOT for stock adjustments
+            c.execute("SELECT material_type_id FROM prejeti_materiali WHERE id=?", (lot_id,))
+            row_mt = c.fetchone()
+            new_mt_id = row_mt[0] if row_mt else None
+
+            if self.nalog_id:
+                c.execute("""
+                    UPDATE delovni_nalog
+                    SET datum_dela=?, lot_prejsnji_id=?, izbrani_lot=?, nova_oblika=?, kolicina=?, nov_lot=?
+                    WHERE id=?
+                """, (dd, lot_id, lot_val, shape_val, qty, nov_lot, self.nalog_id))
+                nalog_id = self.nalog_id
+                # Clear old ingredients before re-inserting
+                c.execute("DELETE FROM delovni_nalog_sestavine WHERE delovni_nalog_id=?", (nalog_id,))
+            else:
+                c.execute("""
+                    INSERT INTO delovni_nalog (datum_dela, lot_prejsnji_id, izbrani_lot, nova_oblika, kolicina, nov_lot)
+                    VALUES (?, ?, ?, ?, ?, ?)
+                """, (dd, lot_id, lot_val, shape_val, qty, nov_lot))
+                nalog_id = c.lastrowid
+
+            for ing_text, ing_qty in self.ingredients:
+                c.execute("""
+                    INSERT INTO delovni_nalog_sestavine (delovni_nalog_id, sestavina, kolicina)
+                    VALUES (?, ?, ?)
+                """, (nalog_id, ing_text, ing_qty))
+
+            conn.commit()
+
+        # Adjust stock: restore old usage if editing, then subtract new usage
+        if self.nalog_id and self.old_lot_id:
+            with sqlite3.connect(self.db.db_path) as conn:
+                c = conn.cursor()
+                c.execute("SELECT material_type_id FROM prejeti_materiali WHERE id=?", (self.old_lot_id,))
+                old_mt = c.fetchone()
+            if old_mt:
+                self.db.update_stock(old_mt[0], self.old_qty)
+
+        if new_mt_id:
+            self.db.update_stock(new_mt_id, -qty)
+
+        messagebox.showinfo("Uspeh", "Delovni nalog shranjen.")
+        self.destroy()
