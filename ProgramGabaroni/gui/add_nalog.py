@@ -62,7 +62,10 @@ class AddNalogWindow(tk.Toplevel):
             ("8) Školjke", "ŠK"),
             ("9) Peresniki", "PR"),
             ("10) Kodrčki", "K"),
-            ("11) Fužije", "F")
+            ("11) Fužije", "F"),
+            ("12) Njokci", "N"),
+            ("13) Tuneli", "T"),
+            ("14) Polperesniki", "PP")
         ]
         self.c_shape = ttk.Combobox(self, values=[f"{n} - {abbr}" for n, abbr in shapes],
                                     state="readonly", width=35)
