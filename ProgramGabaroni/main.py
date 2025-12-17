@@ -1,6 +1,42 @@
+import importlib
+import sys
 import tkinter as tk
-from tkinter import ttk
+from tkinter import messagebox, ttk
 from db_manager import DatabaseManager
+
+
+def ensure_dependencies():
+    required = {
+        "pandas": "pandas je potreben za izvoz CSV.",
+        "reportlab": "reportlab je potreben za izvoz PDF.",
+    }
+
+    missing = []
+    for module, desc in required.items():
+        try:
+            importlib.import_module(module)
+        except ImportError:
+            missing.append((module, desc))
+
+    if missing:
+        msg_lines = ["Manjkajoče odvisnosti:"]
+        for module, desc in missing:
+            msg_lines.append(f"- {module}: {desc}")
+        msg_lines.append("")
+        msg_lines.append("Namesti jih z ukazom: pip install -r requirements.txt")
+        msg_lines.append("ali: conda install -c conda-forge pandas reportlab chardet")
+        full_msg = "\n".join(msg_lines)
+
+        print(full_msg, file=sys.stderr)
+        try:
+            root = tk.Tk()
+            root.withdraw()
+            messagebox.showerror("Manjkajoče odvisnosti", full_msg)
+            root.destroy()
+        except Exception:
+            pass
+
+        sys.exit(1)
 
 class App(tk.Tk):
     def __init__(self, db_path="sledenje.db"):
@@ -80,5 +116,6 @@ class App(tk.Tk):
         EditCategoriesWindow(self, self.db_manager)
 
 if __name__ == "__main__":
+    ensure_dependencies()
     app = App("sledenje.db")
     app.mainloop()
