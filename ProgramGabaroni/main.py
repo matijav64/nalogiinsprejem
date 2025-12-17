@@ -1,8 +1,16 @@
 import importlib
+import os
+import shutil
 import sys
 import tkinter as tk
-from tkinter import messagebox, ttk
+from tkinter import filedialog, messagebox, ttk
 from db_manager import DatabaseManager
+
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DB_IN_CODE_DIR = os.path.join(BASE_DIR, "sledenje.db")
+DB_IN_REPO_ROOT = os.path.abspath(os.path.join(BASE_DIR, "..", "sledenje.db"))
+DB_PATH_FILE = os.path.join(BASE_DIR, "db_path.txt")
 
 
 def ensure_dependencies():
@@ -38,11 +46,30 @@ def ensure_dependencies():
 
         sys.exit(1)
 
+
+def resolve_db_path():
+    if not os.path.exists(DB_IN_CODE_DIR) and os.path.exists(DB_IN_REPO_ROOT):
+        shutil.copy2(DB_IN_REPO_ROOT, DB_IN_CODE_DIR)
+
+    if os.path.exists(DB_PATH_FILE):
+        try:
+            with open(DB_PATH_FILE, "r", encoding="utf-8") as f:
+                custom_path = f.read().strip()
+            if custom_path and os.path.exists(custom_path):
+                return custom_path
+            else:
+                print(f"Saved DB path not found, falling back to default: {custom_path}")
+        except OSError:
+            print("Could not read db_path.txt, falling back to default.")
+
+    return DB_IN_CODE_DIR
+
 class App(tk.Tk):
     def __init__(self, db_path="sledenje.db"):
         super().__init__()
         self.title("Program Gabaroni – Polna Funkcionalnost")
-        
+        self.db_path = os.path.abspath(db_path)
+
         # Make the main window bigger
         self.geometry("600x800")
         self.minsize(600, 800)
@@ -56,7 +83,7 @@ class App(tk.Tk):
         # Bind Escape to close
         self.bind("<Escape>", lambda e: self.destroy())
 
-        self.db_manager = DatabaseManager(db_path)
+        self.db_manager = DatabaseManager(self.db_path)
 
         lbl_title = tk.Label(self, text="Možnosti:", font=("Segoe UI", 18))
         lbl_title.pack(pady=20)
@@ -83,7 +110,10 @@ class App(tk.Tk):
         make_menu_button("Prikaži stanje zaloge", self.open_show_stock)
         make_menu_button("Nastavi trenutno stanje zaloge", self.open_set_stock)
         make_menu_button("Uredi kategorije", self.open_edit_categories)
+        make_menu_button("Izberi bazo (sledenje.db)", self.pick_db)
         make_menu_button("Izhod", self.destroy)
+
+        self.after(0, lambda: messagebox.showinfo("Podatkovna baza", f"Using DB: {self.db_path}"))
 
     # We no longer have on_enter() at the root level
 
@@ -115,7 +145,31 @@ class App(tk.Tk):
         from gui.edit_categories import EditCategoriesWindow
         EditCategoriesWindow(self, self.db_manager)
 
+    def pick_db(self):
+        file_path = filedialog.askopenfilename(
+            parent=self,
+            title="Izberi sledenje.db",
+            filetypes=[("SQLite DB", "*.db *.sqlite"), ("All", "*.*")],
+        )
+        if not file_path:
+            return
+
+        abs_path = os.path.abspath(file_path)
+        try:
+            with open(DB_PATH_FILE, "w", encoding="utf-8") as f:
+                f.write(abs_path)
+        except OSError:
+            messagebox.showerror("Napaka", "Ne morem zapisati poti do baze v db_path.txt.")
+            return
+
+        self.db_path = abs_path
+        print(f"Using DB: {self.db_path}")
+        messagebox.showinfo("Podatkovna baza", f"Using DB: {self.db_path}")
+        self.db_manager = DatabaseManager(self.db_path)
+
 if __name__ == "__main__":
     ensure_dependencies()
-    app = App("sledenje.db")
+    selected_db = resolve_db_path()
+    print(f"Using DB: {os.path.abspath(selected_db)}")
+    app = App(selected_db)
     app.mainloop()
