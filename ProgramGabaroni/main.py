@@ -23,8 +23,8 @@ def ensure_dependencies():
         for module, desc in missing:
             msg_lines.append(f"- {module}: {desc}")
         msg_lines.append("")
-        msg_lines.append("Namesti jih z ukazom: pip install -r requirements.txt")
-        msg_lines.append("ali: conda install -c conda-forge pandas reportlab chardet")
+        msg_lines.append("Namesti jih z ukazom: python -m pip install -r requirements.txt")
+        msg_lines.append("ali: conda install -c conda-forge pandas reportlab")
         full_msg = "\n".join(msg_lines)
 
         print(full_msg, file=sys.stderr)
