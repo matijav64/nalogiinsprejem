@@ -1,6 +1,5 @@
 import tkinter as tk
 from tkinter import ttk, messagebox, filedialog
-import sqlite3
 from utils import unify_string, format_ymd_to_ddmmYYYY
 from export_utils import export_data_dialog
 from gui.theme import apply_theme
@@ -74,7 +73,7 @@ class ShowMaterialsWindow(tk.Toplevel):
             pattern = f"%{search_text}%"
             params.extend([pattern] * 9)
         query += " ORDER BY pm.id ASC"
-        with sqlite3.connect(self.db.db_path) as conn:
+        with self.db.connect() as conn:
             conn.create_function("FORMAT_DATE", 1, format_ymd_to_ddmmYYYY)
             conn.create_function("CASEFOLD", 1, lambda s: s.casefold() if s else "")
             c = conn.cursor()

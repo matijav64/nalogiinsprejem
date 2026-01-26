@@ -1,6 +1,5 @@
 import tkinter as tk
 from tkinter import ttk, messagebox, filedialog
-import sqlite3
 from utils import unify_string
 from gui.theme import apply_theme
 from export_utils import export_data_dialog
@@ -68,7 +67,7 @@ class ShowStockWindow(tk.Toplevel):
             params.append(pattern)
         query += " ORDER BY mt.category, mt.subcategory"
 
-        with sqlite3.connect(self.db.db_path) as conn:
+        with self.db.connect() as conn:
             c = conn.cursor()
             c.execute(query, params)
             rows = c.fetchall()

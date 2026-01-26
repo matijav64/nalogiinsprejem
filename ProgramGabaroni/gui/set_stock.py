@@ -1,6 +1,5 @@
 import tkinter as tk
 from tkinter import ttk, messagebox, simpledialog
-import sqlite3
 from utils import unify_string
 from db_manager import DatabaseManager
 from gui.theme import apply_theme
@@ -45,7 +44,7 @@ class SetStockWindow(tk.Toplevel):
         self.update_subcategories(None)
 
     def load_categories(self):
-        with sqlite3.connect(self.db.db_path) as conn:
+        with self.db.connect() as conn:
             c = conn.cursor()
             c.execute("SELECT DISTINCT category FROM material_types ORDER BY category")
             categories = [row[0] for row in c.fetchall()]
@@ -80,7 +79,7 @@ class SetStockWindow(tk.Toplevel):
             messagebox.showerror("Napaka", "Podkategorija ni v pričakovani obliki (ime (koda))!")
             return
 
-        with sqlite3.connect(self.db.db_path) as conn:
+        with self.db.connect() as conn:
             c = conn.cursor()
             c.execute("SELECT id FROM material_types WHERE category=? AND subcategory=?", (cat, sub_name))
             row = c.fetchone()

@@ -8,12 +8,17 @@ def unify_string(s):
 
 def parse_datum(val):
     """Reads a date in ddmmYYYY or dd.mm.YYYY format and returns a tuple (YYYY-mm-dd, ddmmYYYY)."""
+    if not val:
+        raise ValueError("Datum je prazen.")
     val = unify_string(val.strip())
-    if len(val) == 8 and val.isdigit():
-        dd, mm, yyyy = val[:2], val[2:4], val[4:]
-        dt = datetime.strptime(f"{dd}.{mm}.{yyyy}", "%d.%m.%Y")
-    else:
-        dt = datetime.strptime(val, "%d.%m.%Y")
+    try:
+        if len(val) == 8 and val.isdigit():
+            dd, mm, yyyy = val[:2], val[2:4], val[4:]
+            dt = datetime.strptime(f"{dd}.{mm}.{yyyy}", "%d.%m.%Y")
+        else:
+            dt = datetime.strptime(val, "%d.%m.%Y")
+    except ValueError as exc:
+        raise ValueError("Neveljaven datum. Uporabi ddmmYYYY ali dd.mm.YYYY.") from exc
     return dt.strftime("%Y-%m-%d"), dt.strftime("%d%m%Y")
 
 def format_ymd_to_ddmmYYYY(ymd):

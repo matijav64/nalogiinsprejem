@@ -10,6 +10,8 @@
    ```bash
    python -m pip install -r requirements.txt
    ```
+   - `pandas` se uporablja za izvoz v CSV.
+   - `reportlab` se uporablja za izvoz v PDF.
 
 ## Zagon aplikacije
 Zaženi glavni skript:
