@@ -215,13 +215,31 @@ class AddMaterialWindow(tk.Toplevel):
 
     def _setup_autocomplete(self, combobox):
         combobox._full_values = list(combobox.cget("values"))
+        combobox._typed_text = ""
+        combobox.bind("<KeyPress>", lambda event: self._on_combobox_keypress(event, combobox))
         combobox.bind("<KeyRelease>", lambda event: self._on_combobox_typed(event, combobox))
-        combobox.bind("<FocusIn>", lambda event: self._open_combobox_dropdown(combobox))
+        combobox.bind("<<ComboboxSelected>>", lambda event: self._on_combobox_selected(event, combobox))
+        combobox.bind("<FocusIn>", lambda event: self._on_combobox_focus(event, combobox))
+
+    def _on_combobox_focus(self, event, combobox):
+        combobox._typed_text = ""
+
+    def _on_combobox_selected(self, event, combobox):
+        combobox._typed_text = ""
+
+    def _on_combobox_keypress(self, event, combobox):
+        if event.keysym in {"Left", "Right", "Up", "Down", "Tab", "Return", "Escape"}:
+            return
+        if event.keysym == "BackSpace":
+            combobox._typed_text = combobox._typed_text[:-1]
+            return
+        if event.char and event.char.isprintable():
+            combobox._typed_text += event.char
 
     def _on_combobox_typed(self, event, combobox):
         if event.keysym in {"BackSpace", "Left", "Right", "Up", "Down", "Tab", "Return", "Escape"}:
             return
-        typed = combobox.get().strip()
+        typed = combobox._typed_text.strip() or combobox.get().strip()
         if not typed:
             combobox["values"] = combobox._full_values
             return
