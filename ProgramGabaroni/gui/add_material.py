@@ -4,6 +4,7 @@ import sqlite3
 from datetime import datetime
 from utils import unify_string, parse_datum, format_ymd_to_ddmmYYYY
 from db_manager import DatabaseManager
+from gui.theme import apply_theme
 
 def fetch_suppliers(db_path):
     with sqlite3.connect(db_path) as conn:
@@ -26,6 +27,7 @@ def fetch_persons(db_path):
 class AddMaterialWindow(tk.Toplevel):
     def __init__(self, master, db_manager: DatabaseManager, material_id=None):
         super().__init__(master)
+        apply_theme(self)
         self.db = db_manager
         self.material_id = material_id  # If provided, edit mode
         self.title("Uredi prejeti material" if material_id else "Dodaj prejeti material")

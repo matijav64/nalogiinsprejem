@@ -2,11 +2,13 @@ import tkinter as tk
 from tkinter import ttk, messagebox, filedialog
 import sqlite3
 from utils import unify_string
+from gui.theme import apply_theme
 from export_utils import export_data_dialog
 
 class ShowStockWindow(tk.Toplevel):
     def __init__(self, master, db_manager):
         super().__init__(master)
+        apply_theme(self)
         self.db = db_manager
         self.title("Prikaži stanje zaloge")
         

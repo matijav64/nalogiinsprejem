@@ -3,10 +3,12 @@ from tkinter import ttk, messagebox
 import sqlite3
 from db_manager import DatabaseManager
 from utils import unify_string
+from gui.theme import apply_theme
 
 class EditFullMaterialWindow(tk.Toplevel):
     def __init__(self, master, db_manager: DatabaseManager):
         super().__init__(master)
+        apply_theme(self)
         self.db = db_manager
         self.title("Edit Full Material")
         self.geometry("600x400")

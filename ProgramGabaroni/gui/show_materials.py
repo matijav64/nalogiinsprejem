@@ -3,10 +3,12 @@ from tkinter import ttk, messagebox, filedialog
 import sqlite3
 from utils import unify_string, format_ymd_to_ddmmYYYY
 from export_utils import export_data_dialog
+from gui.theme import apply_theme
 
 class ShowMaterialsWindow(tk.Toplevel):
     def __init__(self, master, db_manager):
         super().__init__(master)
+        apply_theme(self)
         self.db = db_manager
         self.title("Izpiši prejete materiale")
         self.geometry("1020x600")

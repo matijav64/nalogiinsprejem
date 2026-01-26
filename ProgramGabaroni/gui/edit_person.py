@@ -3,19 +3,21 @@ from tkinter import ttk, messagebox
 import sqlite3
 from db_manager import DatabaseManager
 from utils import unify_string
+from gui.theme import apply_theme
 
 class EditPersonWindow(tk.Toplevel):
     def __init__(self, master, db_manager: DatabaseManager, person_id: int):
         super().__init__(master)
+        apply_theme(self)
         self.db = db_manager
         self.person_id = person_id
         self.title("Uredi prejemca")
         self.geometry("300x150")
         self.bind("<Escape>", lambda e: self.destroy())
 
-        tk.Label(self, text="Ime prejemca:").pack(pady=5)
+        tk.Label(self, text="Ime prejemca:").pack(pady=8)
         self.e_name = tk.Entry(self, width=30)
-        self.e_name.pack(pady=5)
+        self.e_name.pack(pady=6)
 
         with sqlite3.connect(self.db.db_path) as conn:
             c = conn.cursor()
@@ -24,8 +26,8 @@ class EditPersonWindow(tk.Toplevel):
         if row:
             self.e_name.insert(0, row[0])
 
-        ttk.Button(self, text="Shrani", command=self.save).pack(pady=5)
-        ttk.Button(self, text="Briši", command=self.delete).pack(pady=5)
+        ttk.Button(self, text="Shrani", command=self.save).pack(pady=6)
+        ttk.Button(self, text="Briši", style="Danger.TButton", command=self.delete).pack(pady=6)
 
     def save(self):
         name = unify_string(self.e_name.get().strip())

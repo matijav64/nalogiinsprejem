@@ -5,6 +5,7 @@ import sys
 import tkinter as tk
 from tkinter import filedialog, messagebox, ttk
 from db_manager import DatabaseManager
+from gui.theme import apply_theme
 
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -67,15 +68,13 @@ def resolve_db_path():
 class App(tk.Tk):
     def __init__(self, db_path="sledenje.db"):
         super().__init__()
+        apply_theme(self)
         self.title("Program Gabaroni – Polna Funkcionalnost")
         self.db_path = os.path.abspath(db_path)
 
         # Make the main window bigger
         self.geometry("600x800")
         self.minsize(600, 800)
-
-        # Apply a bigger default font to all widgets
-        self.option_add("*Font", ("Segoe UI", 14))
 
         # We will NOT bind <Return> globally to avoid double triggers.
         # self.bind("<Return>", self.on_enter)  <-- REMOVED
@@ -85,18 +84,14 @@ class App(tk.Tk):
 
         self.db_manager = DatabaseManager(self.db_path)
 
-        lbl_title = tk.Label(self, text="Možnosti:", font=("Segoe UI", 18))
+        lbl_title = ttk.Label(self, text="Možnosti:", style="Header.TLabel")
         lbl_title.pack(pady=20)
 
-        # Create a style for bigger TButton
-        style = ttk.Style(self)
-        style.configure("Menu.TButton", font=("Segoe UI", 14), padding=15)
-
-        btn_frame = tk.Frame(self)
+        btn_frame = ttk.Frame(self)
         btn_frame.pack(expand=True, fill="both", padx=40, pady=10)
 
         def make_menu_button(txt, cmd):
-            btn = ttk.Button(btn_frame, text=txt, style="Menu.TButton", command=cmd)
+            btn = ttk.Button(btn_frame, text=txt, command=cmd)
             btn.pack(pady=10, fill="x")
             # Bind <Return> so that pressing Enter when this button has focus
             # calls cmd exactly once, with no global <Return> binding to double-fire

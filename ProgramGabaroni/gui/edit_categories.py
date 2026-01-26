@@ -8,25 +8,26 @@ from gui.edit_categories_helper import (
     EditPersonsWindow,
     EditShapesWindow,
 )
+from gui.theme import apply_theme
 
 class EditCategoriesWindow(tk.Toplevel):
     def __init__(self, master, db_manager: DatabaseManager):
         super().__init__(master)
+        apply_theme(self)
         self.db = db_manager
         self.title("Uredi kategorije")
 
         # Larger window
         self.geometry("600x400")
         self.minsize(600, 400)
-        self.option_add("*Font", ("Segoe UI", 14))
 
         self.bind("<Escape>", lambda e: self.destroy())
 
-        ttk.Button(self, text="Uredi surovine", command=self.edit_surovine).pack(pady=10)
-        ttk.Button(self, text="Uredi dobavitelje", command=self.edit_suppliers).pack(pady=10)
-        ttk.Button(self, text="Uredi prevoznike", command=self.edit_carriers).pack(pady=10)
-        ttk.Button(self, text="Uredi prejemce", command=self.edit_persons).pack(pady=10)
-        ttk.Button(self, text="Uredi oblike", command=self.edit_shapes).pack(pady=10)
+        ttk.Button(self, text="Uredi surovine", command=self.edit_surovine).pack(pady=10, padx=20, fill="x")
+        ttk.Button(self, text="Uredi dobavitelje", command=self.edit_suppliers).pack(pady=10, padx=20, fill="x")
+        ttk.Button(self, text="Uredi prevoznike", command=self.edit_carriers).pack(pady=10, padx=20, fill="x")
+        ttk.Button(self, text="Uredi prejemce", command=self.edit_persons).pack(pady=10, padx=20, fill="x")
+        ttk.Button(self, text="Uredi oblike", command=self.edit_shapes).pack(pady=10, padx=20, fill="x")
 
     def edit_surovine(self):
         EditRawMaterialsWindow(self, self.db)

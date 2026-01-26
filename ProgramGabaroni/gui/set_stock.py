@@ -3,43 +3,42 @@ from tkinter import ttk, messagebox, simpledialog
 import sqlite3
 from utils import unify_string
 from db_manager import DatabaseManager
+from gui.theme import apply_theme
 
 class SetStockWindow(tk.Toplevel):
     def __init__(self, master, db_manager: DatabaseManager):
         super().__init__(master)
+        apply_theme(self)
         self.db = db_manager
         self.title("Nastavi trenutno stanje zaloge")
 
         # Make the window larger
         self.geometry("600x400")
         self.minsize(600, 400)
-        # Apply bigger font to everything in this Toplevel
-        self.option_add("*Font", ("Segoe UI", 14))
-
         self.bind("<Escape>", lambda e: self.destroy())
 
-        tk.Label(self, text="Izberi kategorijo:").grid(row=0, column=0, sticky="e", padx=5, pady=5)
+        tk.Label(self, text="Izberi kategorijo:").grid(row=0, column=0, sticky="e", padx=10, pady=6)
         self.cat_cb = ttk.Combobox(self, state="readonly", width=20)
         self.load_categories()
-        self.cat_cb.grid(row=0, column=1, padx=5, pady=5)
+        self.cat_cb.grid(row=0, column=1, padx=10, pady=6)
         self.cat_cb.bind("<<ComboboxSelected>>", self.update_subcategories)
 
-        tk.Label(self, text="Izberi podkategorijo:").grid(row=1, column=0, sticky="e", padx=5, pady=5)
+        tk.Label(self, text="Izberi podkategorijo:").grid(row=1, column=0, sticky="e", padx=10, pady=6)
         self.sub_cb = ttk.Combobox(self, state="readonly", width=20)
-        self.sub_cb.grid(row=1, column=1, padx=5, pady=5)
+        self.sub_cb.grid(row=1, column=1, padx=10, pady=6)
 
-        tk.Label(self, text="Nova količina:").grid(row=2, column=0, sticky="e", padx=5, pady=5)
+        tk.Label(self, text="Nova količina:").grid(row=2, column=0, sticky="e", padx=10, pady=6)
         self.e_qty = tk.Entry(self, width=10)
-        self.e_qty.grid(row=2, column=1, padx=5, pady=5)
+        self.e_qty.grid(row=2, column=1, padx=10, pady=6)
 
-        btn_frame = tk.Frame(self)
-        btn_frame.grid(row=3, column=0, columnspan=2, pady=15)
+        btn_frame = ttk.Frame(self)
+        btn_frame.grid(row=3, column=0, columnspan=2, pady=18)
 
         btn_set = ttk.Button(btn_frame, text="Nastavi", command=self.set_stanje)
         btn_set.pack(side="left", padx=5)
         btn_set.bind("<Return>", lambda e: btn_set.invoke())
 
-        btn_cancel = ttk.Button(btn_frame, text="Prekliči", command=self.destroy)
+        btn_cancel = ttk.Button(btn_frame, text="Prekliči", style="Secondary.TButton", command=self.destroy)
         btn_cancel.pack(side="left", padx=5)
         btn_cancel.bind("<Return>", lambda e: btn_cancel.invoke())
 
