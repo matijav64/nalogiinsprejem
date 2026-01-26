@@ -65,11 +65,14 @@ class ShowMaterialsWindow(tk.Toplevel):
                     CASEFOLD(p.name) LIKE ? OR 
                     CASEFOLD(pm.generirana_koda) LIKE ? OR 
                     CASEFOLD(FORMAT_DATE(pm.datum_prejema)) LIKE ? OR
-                    CASEFOLD(FORMAT_DATE(pm.rok_uporabe)) LIKE ?
+                    CASEFOLD(FORMAT_DATE(pm.rok_uporabe)) LIKE ? OR
+                    CASEFOLD(mt.category) LIKE ? OR
+                    CASEFOLD(mt.subcategory) LIKE ? OR
+                    CASEFOLD(mt.code) LIKE ?
                 )
             """
             pattern = f"%{search_text}%"
-            params.extend([pattern]*6)
+            params.extend([pattern] * 9)
         query += " ORDER BY pm.id ASC"
         with sqlite3.connect(self.db.db_path) as conn:
             conn.create_function("FORMAT_DATE", 1, format_ymd_to_ddmmYYYY)

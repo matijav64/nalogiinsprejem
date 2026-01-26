@@ -181,7 +181,7 @@ class AddMaterialWindow(tk.Toplevel):
             self.e_datum.insert(0, dt.strftime("%d%m%Y"))
         except:
             self.e_datum.insert(0, rec[0])
-        self.e_rok.insert(0, rec[3] if rec[3] else "")
+        self.e_rok.insert(0, format_ymd_to_ddmmYYYY(rec[3]) if rec[3] else "")
         # For editing, we now fill the supplier/carrier/person fields from DB:
         with sqlite3.connect(self.db.db_path) as conn:
             c = conn.cursor()
@@ -309,6 +309,13 @@ class AddMaterialWindow(tk.Toplevel):
         except:
             messagebox.showerror("Napaka", "Napačen datum!")
             return
+        rok_db_val = None
+        if rok_val:
+            try:
+                rok_db_val, _ = parse_datum(rok_val)
+            except Exception:
+                messagebox.showerror("Napaka", "Napačen datum roka uporabe!")
+                return
         try:
             qty = float(kol_str)
         except:
@@ -359,7 +366,7 @@ class AddMaterialWindow(tk.Toplevel):
                         generirana_koda=?,
                         kolicina=?
                     WHERE id=?
-                """, (dd, supplier_id, carrier_id, rok_val, emb_val, sklad_val, rekl_val,
+                """, (dd, supplier_id, carrier_id, rok_db_val, emb_val, sklad_val, rekl_val,
                       person_id, mt_id, gen_code, qty, self.material_id))
             else:
                 c.execute("""
@@ -379,7 +386,7 @@ class AddMaterialWindow(tk.Toplevel):
                         ?,
                         ?
                     )
-                """, (dd, supplier_id, carrier_id, rok_val, emb_val, sklad_val, rekl_val,
+                """, (dd, supplier_id, carrier_id, rok_db_val, emb_val, sklad_val, rekl_val,
                       person_id, mt_id, gen_code, qty))
             conn.commit()
         # Update stock: if editing, use diff; if new, add entire qty
