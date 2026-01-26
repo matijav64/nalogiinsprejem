@@ -232,9 +232,14 @@ class AddMaterialWindow(tk.Toplevel):
             return
         if event.keysym == "BackSpace":
             combobox._typed_text = combobox._typed_text[:-1]
-            return
+            combobox.set(combobox._typed_text)
+            combobox.icursor(tk.END)
+            return "break"
         if event.char and event.char.isprintable():
             combobox._typed_text += event.char
+            combobox.set(combobox._typed_text)
+            combobox.icursor(tk.END)
+            return "break"
 
     def _on_combobox_typed(self, event, combobox):
         if event.keysym in {"BackSpace", "Left", "Right", "Up", "Down", "Tab", "Return", "Escape"}:
