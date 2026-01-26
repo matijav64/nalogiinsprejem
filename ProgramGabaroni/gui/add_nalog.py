@@ -31,6 +31,7 @@ class AddNalogWindow(tk.Toplevel):
         form_frame.grid(row=0, column=0, sticky="n", padx=40, pady=20)
         form_frame.columnconfigure(0, weight=0)
         form_frame.columnconfigure(1, weight=1)
+        form_frame.columnconfigure(2, weight=0)
 
         label_width = 24
         input_width = 42
@@ -66,7 +67,7 @@ class AddNalogWindow(tk.Toplevel):
         self.c_sub.bind("<<ComboboxSelected>>", self.on_sub_select)
         row += 1
 
-        ttk.Label(form_frame, text="Zadnji 3 vnosi (Moka):", width=label_width, anchor="e").grid(
+        ttk.Label(form_frame, text="Zadnjih 6 vnosov (Moka):", width=label_width, anchor="e").grid(
             row=row,
             column=0,
             sticky="e",
@@ -75,6 +76,13 @@ class AddNalogWindow(tk.Toplevel):
         )
         self.c_mat = ttk.Combobox(form_frame, values=[], state="readonly", width=input_width)
         self.c_mat.grid(row=row, column=1, sticky="ew", padx=10, pady=6)
+        self.btn_add_material = ttk.Button(
+            form_frame,
+            text="Vnesi material",
+            command=self.open_add_material,
+        )
+        self.btn_add_material.grid(row=row, column=2, sticky="w", padx=10, pady=6)
+        self.btn_add_material.bind("<Return>", lambda e: self.btn_add_material.invoke())
         row += 1
 
         ttk.Label(form_frame, text="Oblika izdelka:", width=label_width, anchor="e").grid(
@@ -162,7 +170,7 @@ class AddNalogWindow(tk.Toplevel):
                     FROM prejeti_materiali
                     WHERE material_type_id=?
                     ORDER BY id DESC
-                    LIMIT 3
+                    LIMIT 6
                 """, (mt_id,))
                 for r in c.fetchall():
                     supplier_name = r[3] if r[3] else "??"
@@ -172,6 +180,17 @@ class AddNalogWindow(tk.Toplevel):
             self.c_mat.set(combos[0])
         else:
             self.c_mat.set("Ni podatkov")
+
+    def open_add_material(self):
+        from gui.add_material import AddMaterialWindow
+
+        window = AddMaterialWindow(self, self.db)
+        self.wait_window(window)
+        sub_val = self.c_sub.get().strip()
+        if sub_val:
+            parts = sub_val.split(" ", 1)
+            sub_name = parts[1] if len(parts) > 1 else sub_val
+            self.load_lot_options(sub_name)
 
     def add_ingredient(self):
         extra = ExtraWindow(self, self.db, None)
