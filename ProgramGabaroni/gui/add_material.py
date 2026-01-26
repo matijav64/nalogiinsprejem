@@ -280,8 +280,6 @@ class AddMaterialWindow(tk.Toplevel):
             next_widget = self._tab_order[idx + 1]
         if next_widget:
             next_widget.focus_set()
-            if isinstance(next_widget, ttk.Combobox):
-                self._open_combobox_dropdown(next_widget)
         return "break"
 
     def _auto_fill_year(self, entry):
