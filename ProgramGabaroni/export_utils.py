@@ -72,7 +72,7 @@ def export_data_dialog(headers, data, table_name, root_name):
             export_to_sql(new_headers, new_data, table_name, fname)
         elif fmt == "csv":
             export_to_csv(new_headers, new_data, fname)
-        messagebox.showinfo("Izvoz", f"Izvo≈æeno v {fmt.upper()}: {fname}")
+        messagebox.showinfo("Izvoz", f"Izvoženo v {fmt.upper()}: {fname}")
         top.destroy()
 
     top = Toplevel()
