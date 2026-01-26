@@ -41,14 +41,14 @@ class AddMaterialWindow(tk.Toplevel):
         tk.Label(self, text="Dobavitelj:").grid(row=row, column=0, sticky="e", padx=5, pady=3)
         self.c_dob = ttk.Combobox(self, values=fetch_suppliers(self.db.db_path), width=25)
         self.c_dob.grid(row=row, column=1, padx=5, pady=3)
-        btn_new_supplier = ttk.Button(self, text="Dodaj novega", command=self.add_new_supplier)
+        btn_new_supplier = ttk.Button(self, text="Dodaj novega", command=self.add_new_supplier, takefocus=0)
         btn_new_supplier.grid(row=row, column=2, padx=5, pady=3)
         btn_new_supplier.bind("<Return>", lambda e: btn_new_supplier.invoke())
         row += 1
         tk.Label(self, text="Prevoznik:").grid(row=row, column=0, sticky="e", padx=5, pady=3)
         self.c_car = ttk.Combobox(self, values=fetch_carriers(self.db.db_path), width=25)
         self.c_car.grid(row=row, column=1, padx=5, pady=3)
-        btn_new_carrier = ttk.Button(self, text="Dodaj novega", command=self.add_new_carrier)
+        btn_new_carrier = ttk.Button(self, text="Dodaj novega", command=self.add_new_carrier, takefocus=0)
         btn_new_carrier.grid(row=row, column=2, padx=5, pady=3)
         btn_new_carrier.bind("<Return>", lambda e: btn_new_carrier.invoke())
         row += 1
@@ -74,7 +74,7 @@ class AddMaterialWindow(tk.Toplevel):
         tk.Label(self, text="Prejemec:").grid(row=row, column=0, sticky="e", padx=5, pady=3)
         self.c_person = ttk.Combobox(self, values=fetch_persons(self.db.db_path), width=25)
         self.c_person.grid(row=row, column=1, padx=5, pady=3)
-        btn_new_person = ttk.Button(self, text="Dodaj novega", command=self.add_new_person)
+        btn_new_person = ttk.Button(self, text="Dodaj novega", command=self.add_new_person, takefocus=0)
         btn_new_person.grid(row=row, column=2, padx=5, pady=3)
         btn_new_person.bind("<Return>", lambda e: btn_new_person.invoke())
         row += 1
@@ -83,13 +83,14 @@ class AddMaterialWindow(tk.Toplevel):
             cu = conn.cursor()
             cu.execute("SELECT DISTINCT category FROM material_types ORDER BY category")
             cat_list = [r[0] for r in cu.fetchall()]
-        self.c_cat = ttk.Combobox(self, values=cat_list, state="readonly", width=25)
+        self.c_cat = ttk.Combobox(self, values=cat_list, width=25)
         self.c_cat.grid(row=row, column=1, padx=5, pady=3)
         self.c_cat.bind("<<ComboboxSelected>>", self.on_cat_select)
+        self.c_cat.bind("<FocusOut>", self.on_cat_select)
         row += 1
         tk.Label(self, text="Podkategorija:").grid(row=row, column=0, sticky="e", padx=5, pady=3)
         # e.g. "IT1 Durum"
-        self.c_sub = ttk.Combobox(self, values=[], state="readonly", width=25)
+        self.c_sub = ttk.Combobox(self, values=[], width=25)
         self.c_sub.grid(row=row, column=1, padx=5, pady=3)
         row += 1
         tk.Label(self, text="Količina:").grid(row=row, column=0, sticky="e", padx=5, pady=3)
@@ -99,6 +100,8 @@ class AddMaterialWindow(tk.Toplevel):
         btn_save = ttk.Button(self, text="Shrani material", command=self.save_material)
         btn_save.grid(row=row, column=0, columnspan=3, pady=15)
         btn_save.bind("<Return>", lambda e: btn_save.invoke())
+        self.configure_autocomplete()
+        self.configure_tab_navigation()
         self.update_idletasks()
         self.geometry(f"{self.winfo_reqwidth()}x{self.winfo_reqheight()}")
         self.e_datum.focus_set()
@@ -118,6 +121,7 @@ class AddMaterialWindow(tk.Toplevel):
                 c.execute("INSERT OR IGNORE INTO suppliers (name) VALUES (?)", (val,))
                 conn.commit()
             self.c_dob['values'] = fetch_suppliers(self.db.db_path)
+            self.c_dob._full_values = list(self.c_dob['values'])
             self.c_dob.set(val)
 
     def add_new_carrier(self):
@@ -128,6 +132,7 @@ class AddMaterialWindow(tk.Toplevel):
                 c.execute("INSERT OR IGNORE INTO carriers (name) VALUES (?)", (val,))
                 conn.commit()
             self.c_car['values'] = fetch_carriers(self.db.db_path)
+            self.c_car._full_values = list(self.c_car['values'])
             self.c_car.set(val)
 
     def add_new_person(self):
@@ -138,6 +143,7 @@ class AddMaterialWindow(tk.Toplevel):
                 c.execute("INSERT OR IGNORE INTO persons (name) VALUES (?)", (val,))
                 conn.commit()
             self.c_person['values'] = fetch_persons(self.db.db_path)
+            self.c_person._full_values = list(self.c_person['values'])
             self.c_person.set(val)
 
     def on_cat_select(self, event):
@@ -150,7 +156,8 @@ class AddMaterialWindow(tk.Toplevel):
             cu.execute("SELECT DISTINCT subcategory, code FROM material_types WHERE category=? ORDER BY subcategory", (cat,))
             subs = cu.fetchall()
         self.c_sub['values'] = [f"{s[1]} {s[0]}" for s in subs]
-        if subs:
+        self.c_sub._full_values = list(self.c_sub['values'])
+        if subs and not self.c_sub.get():
             self.c_sub.set(f"{subs[0][1]} {subs[0][0]}")
 
     def fill_data(self):
@@ -198,6 +205,63 @@ class AddMaterialWindow(tk.Toplevel):
             self.on_cat_select(None)
             self.c_sub.set(f"{mt[2]} {mt[1]}")
         self.e_kol.insert(0, str(rec[10]))
+
+    def configure_autocomplete(self):
+        self._setup_autocomplete(self.c_dob)
+        self._setup_autocomplete(self.c_car)
+        self._setup_autocomplete(self.c_person)
+        self._setup_autocomplete(self.c_cat)
+        self._setup_autocomplete(self.c_sub)
+
+    def _setup_autocomplete(self, combobox):
+        combobox._full_values = list(combobox.cget("values"))
+        combobox.bind("<KeyRelease>", lambda event: self._on_combobox_typed(event, combobox))
+        combobox.bind("<FocusIn>", lambda event: self._open_combobox_dropdown(combobox))
+
+    def _on_combobox_typed(self, event, combobox):
+        if event.keysym in {"BackSpace", "Left", "Right", "Up", "Down", "Tab", "Return", "Escape"}:
+            return
+        typed = combobox.get().strip()
+        if not typed:
+            combobox["values"] = combobox._full_values
+            return
+        matches = [val for val in combobox._full_values if val.lower().startswith(typed.lower())]
+        if matches:
+            combobox["values"] = matches
+            self._open_combobox_dropdown(combobox)
+        else:
+            combobox["values"] = combobox._full_values
+
+    def _open_combobox_dropdown(self, combobox):
+        self.after(1, lambda: combobox.event_generate("<Down>"))
+
+    def configure_tab_navigation(self):
+        self._tab_order = [
+            self.e_datum,
+            self.c_dob,
+            self.c_car,
+            self.e_rok,
+            self.c_person,
+            self.c_cat,
+            self.c_sub,
+            self.e_kol,
+        ]
+        for widget in self._tab_order:
+            widget.bind("<Tab>", self._on_tab_press)
+
+    def _on_tab_press(self, event):
+        try:
+            idx = self._tab_order.index(event.widget)
+        except ValueError:
+            idx = -1
+        next_widget = None
+        if idx >= 0 and idx + 1 < len(self._tab_order):
+            next_widget = self._tab_order[idx + 1]
+        if next_widget:
+            next_widget.focus_set()
+            if isinstance(next_widget, ttk.Combobox):
+                self._open_combobox_dropdown(next_widget)
+        return "break"
 
     def save_material(self):
         d_val = unify_string(self.e_datum.get().strip())
