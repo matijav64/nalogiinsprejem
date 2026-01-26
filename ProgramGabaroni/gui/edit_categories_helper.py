@@ -3,22 +3,24 @@ from tkinter import ttk, messagebox, simpledialog
 import sqlite3
 from db_manager import DatabaseManager
 from gui.edit_single_raw_material import EditSingleRawMaterialWindow
+from gui.theme import apply_theme
 
 class EditRawMaterialsWindow(tk.Toplevel):
     def __init__(self, master, db_manager: DatabaseManager):
         super().__init__(master)
+        apply_theme(self)
         self.db = db_manager
         self.title("Uredi surovine (drevo)")
         self.geometry("700x400")
         self.bind("<Escape>", lambda e: self.destroy())
         self.tree = ttk.Treeview(self, show="tree")
         self.tree.pack(fill="both", expand=True)
-        frm = tk.Frame(self)
+        frm = ttk.Frame(self)
         frm.pack(fill="x")
-        ttk.Button(frm, text="Dodaj kategorijo", command=self.add_cat).pack(side="left", padx=5, pady=5)
-        ttk.Button(frm, text="Dodaj podkategorijo", command=self.add_sub).pack(side="left", padx=5, pady=5)
-        ttk.Button(frm, text="Uredi izbrano", command=self.edit_sel).pack(side="left", padx=5, pady=5)
-        ttk.Button(frm, text="Briši izbrano", command=self.del_sel).pack(side="left", padx=5, pady=5)
+        ttk.Button(frm, text="Dodaj kategorijo", command=self.add_cat).pack(side="left", padx=8, pady=8)
+        ttk.Button(frm, text="Dodaj podkategorijo", command=self.add_sub).pack(side="left", padx=8, pady=8)
+        ttk.Button(frm, text="Uredi izbrano", command=self.edit_sel).pack(side="left", padx=8, pady=8)
+        ttk.Button(frm, text="Briši izbrano", style="Danger.TButton", command=self.del_sel).pack(side="left", padx=8, pady=8)
         self.refresh_tree()
 
     def refresh_tree(self):
@@ -123,6 +125,7 @@ class EditRawMaterialsWindow(tk.Toplevel):
 class EditSuppliersWindow(tk.Toplevel):
     def __init__(self, master, db_manager: DatabaseManager):
         super().__init__(master)
+        apply_theme(self)
         self.db = db_manager
         self.title("Uredi dobavitelje")
         self.geometry("400x300")
@@ -133,7 +136,7 @@ class EditSuppliersWindow(tk.Toplevel):
         self.tree.pack(fill="both", expand=True)
         self.tree.bind("<Double-1>", self.on_double_click)
         self.refresh_tree()
-        ttk.Button(self, text="Dodaj dobavitelja", command=self.add_supplier).pack(pady=5)
+        ttk.Button(self, text="Dodaj dobavitelja", command=self.add_supplier).pack(pady=8)
 
     def refresh_tree(self):
         for i in self.tree.get_children():
@@ -164,6 +167,7 @@ class EditSuppliersWindow(tk.Toplevel):
 class EditCarriersWindow(tk.Toplevel):
     def __init__(self, master, db_manager: DatabaseManager):
         super().__init__(master)
+        apply_theme(self)
         self.db = db_manager
         self.title("Uredi prevoznike")
         self.geometry("400x300")
@@ -174,7 +178,7 @@ class EditCarriersWindow(tk.Toplevel):
         self.tree.pack(fill="both", expand=True)
         self.tree.bind("<Double-1>", self.on_double_click)
         self.refresh_tree()
-        ttk.Button(self, text="Dodaj prevoznika", command=self.add_carrier).pack(pady=5)
+        ttk.Button(self, text="Dodaj prevoznika", command=self.add_carrier).pack(pady=8)
 
     def refresh_tree(self):
         for i in self.tree.get_children():
@@ -205,6 +209,7 @@ class EditCarriersWindow(tk.Toplevel):
 class EditPersonsWindow(tk.Toplevel):
     def __init__(self, master, db_manager: DatabaseManager):
         super().__init__(master)
+        apply_theme(self)
         self.db = db_manager
         self.title("Uredi prejemce")
         self.geometry("400x300")
@@ -215,7 +220,7 @@ class EditPersonsWindow(tk.Toplevel):
         self.tree.pack(fill="both", expand=True)
         self.tree.bind("<Double-1>", self.on_double_click)
         self.refresh_tree()
-        ttk.Button(self, text="Dodaj prejemca", command=self.add_person).pack(pady=5)
+        ttk.Button(self, text="Dodaj prejemca", command=self.add_person).pack(pady=8)
 
     def refresh_tree(self):
         for i in self.tree.get_children():
@@ -246,6 +251,7 @@ class EditPersonsWindow(tk.Toplevel):
 class EditShapesWindow(tk.Toplevel):
     def __init__(self, master, db_manager: DatabaseManager):
         super().__init__(master)
+        apply_theme(self)
         self.db = db_manager
         self.title("Uredi oblike")
         self.geometry("600x350")
@@ -258,11 +264,11 @@ class EditShapesWindow(tk.Toplevel):
         self.tree.pack(fill="both", expand=True)
         self.tree.bind("<Double-1>", self.edit_shape)
 
-        frm = tk.Frame(self)
+        frm = ttk.Frame(self)
         frm.pack(fill="x")
-        ttk.Button(frm, text="Dodaj obliko", command=self.add_shape).pack(side="left", padx=5, pady=5)
-        ttk.Button(frm, text="Uredi izbrano", command=self.edit_shape).pack(side="left", padx=5, pady=5)
-        ttk.Button(frm, text="Briši izbrano", command=self.delete_shape).pack(side="left", padx=5, pady=5)
+        ttk.Button(frm, text="Dodaj obliko", command=self.add_shape).pack(side="left", padx=8, pady=8)
+        ttk.Button(frm, text="Uredi izbrano", command=self.edit_shape).pack(side="left", padx=8, pady=8)
+        ttk.Button(frm, text="Briši izbrano", style="Danger.TButton", command=self.delete_shape).pack(side="left", padx=8, pady=8)
         self.refresh_tree()
 
     def refresh_tree(self):

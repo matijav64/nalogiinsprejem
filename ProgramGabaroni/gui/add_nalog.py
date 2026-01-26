@@ -5,10 +5,12 @@ from datetime import datetime
 from utils import unify_string, parse_datum
 from db_manager import DatabaseManager
 from gui.extra_windows import ExtraWindow
+from gui.theme import apply_theme
 
 class AddNalogWindow(tk.Toplevel):
     def __init__(self, master, db_manager: DatabaseManager, nalog_id=None):
         super().__init__(master)
+        apply_theme(self)
         self.db = db_manager
         self.nalog_id = nalog_id  # None = new, otherwise editing
 
@@ -16,13 +18,6 @@ class AddNalogWindow(tk.Toplevel):
         # Larger window
         self.geometry("900x700")
         self.minsize(900, 700)
-        self.option_add("*Font", ("Segoe UI", 14))
-
-        style = ttk.Style(self)
-        style.configure("TButton", font=("Segoe UI", 14), padding=10)
-        style.configure("TLabel", font=("Segoe UI", 14))
-        style.configure("TEntry", font=("Segoe UI", 14))
-
         # Only bind Escape to close, no global <Return> to avoid double triggers
         self.bind("<Escape>", lambda e: self.destroy())
 
@@ -33,24 +28,24 @@ class AddNalogWindow(tk.Toplevel):
 
         row = 0
 
-        tk.Label(self, text="Datum dela (ddmmYYYY):").grid(row=row, column=0, sticky="e", padx=5, pady=5)
+        tk.Label(self, text="Datum dela (ddmmYYYY):").grid(row=row, column=0, sticky="e", padx=10, pady=6)
         self.e_datum = tk.Entry(self, width=20)
-        self.e_datum.grid(row=row, column=1, padx=5, pady=5)
+        self.e_datum.grid(row=row, column=1, padx=10, pady=6)
         row += 1
 
-        tk.Label(self, text="Podkategorija (Moka):").grid(row=row, column=0, sticky="e", padx=5, pady=5)
+        tk.Label(self, text="Podkategorija (Moka):").grid(row=row, column=0, sticky="e", padx=10, pady=6)
         subs = self.db.get_subcategories(self.moka_category)
         self.c_sub = ttk.Combobox(self, values=[f"{s[1]} {s[0]}" for s in subs], state="readonly", width=25)
-        self.c_sub.grid(row=row, column=1, padx=5, pady=5)
+        self.c_sub.grid(row=row, column=1, padx=10, pady=6)
         self.c_sub.bind("<<ComboboxSelected>>", self.on_sub_select)
         row += 1
 
-        tk.Label(self, text="Zadnji 3 vnosi (Moka):").grid(row=row, column=0, sticky="e", padx=5, pady=5)
+        tk.Label(self, text="Zadnji 3 vnosi (Moka):").grid(row=row, column=0, sticky="e", padx=10, pady=6)
         self.c_mat = ttk.Combobox(self, values=[], state="readonly", width=50)
-        self.c_mat.grid(row=row, column=1, padx=5, pady=5)
+        self.c_mat.grid(row=row, column=1, padx=10, pady=6)
         row += 1
 
-        tk.Label(self, text="Oblika izdelka:").grid(row=row, column=0, sticky="e", padx=5, pady=5)
+        tk.Label(self, text="Oblika izdelka:").grid(row=row, column=0, sticky="e", padx=10, pady=6)
         shapes = self.db.get_shapes()
         self.c_shape = ttk.Combobox(
             self,
@@ -58,28 +53,28 @@ class AddNalogWindow(tk.Toplevel):
             state="readonly",
             width=35,
         )
-        self.c_shape.grid(row=row, column=1, padx=5, pady=5)
+        self.c_shape.grid(row=row, column=1, padx=10, pady=6)
         row += 1
 
-        tk.Label(self, text="Količina:").grid(row=row, column=0, sticky="e", padx=5, pady=5)
+        tk.Label(self, text="Količina:").grid(row=row, column=0, sticky="e", padx=10, pady=6)
         self.e_kol = tk.Entry(self, width=10)
-        self.e_kol.grid(row=row, column=1, padx=5, pady=5)
+        self.e_kol.grid(row=row, column=1, padx=10, pady=6)
         row += 1
 
-        tk.Label(self, text="Dodatne sestavine:").grid(row=row, column=0, sticky="ne", padx=5, pady=5)
-        self.ingredients_frame = tk.Frame(self)
-        self.ingredients_frame.grid(row=row, column=1, sticky="w", padx=5, pady=5)
+        tk.Label(self, text="Dodatne sestavine:").grid(row=row, column=0, sticky="ne", padx=10, pady=6)
+        self.ingredients_frame = ttk.Frame(self)
+        self.ingredients_frame.grid(row=row, column=1, sticky="w", padx=10, pady=6)
         self.ingredients = []
         row += 1
 
         btn_add_ing = ttk.Button(self, text="Dodaj sestavino", command=self.add_ingredient)
-        btn_add_ing.grid(row=row, column=1, sticky="w", padx=5, pady=5)
+        btn_add_ing.grid(row=row, column=1, sticky="w", padx=10, pady=6)
         btn_add_ing.bind("<Return>", lambda e: btn_add_ing.invoke())
         row += 1
 
         # Frame that spans columns to center the Save/Cancel
-        btn_frame = tk.Frame(self)
-        btn_frame.grid(row=row, column=0, columnspan=2, pady=15)
+        btn_frame = ttk.Frame(self)
+        btn_frame.grid(row=row, column=0, columnspan=2, pady=18)
         # Optionally force a width to center
         btn_frame.config(width=400)
 
@@ -87,7 +82,7 @@ class AddNalogWindow(tk.Toplevel):
         btn_save.pack(side="left", padx=10)
         btn_save.bind("<Return>", lambda e: btn_save.invoke())
 
-        btn_cancel = ttk.Button(btn_frame, text="Prekliči", command=self.destroy)
+        btn_cancel = ttk.Button(btn_frame, text="Prekliči", style="Secondary.TButton", command=self.destroy)
         btn_cancel.pack(side="left", padx=10)
         btn_cancel.bind("<Return>", lambda e: btn_cancel.invoke())
 
@@ -134,7 +129,7 @@ class AddNalogWindow(tk.Toplevel):
         ing_text, ing_qty = extra.chosen_texts()
         if ing_text:
             self.ingredients.append((ing_text, ing_qty))
-            row_frame = tk.Frame(self.ingredients_frame)
+            row_frame = ttk.Frame(self.ingredients_frame)
             row_frame.pack(anchor="w", fill="x")
             lbl = tk.Label(row_frame, text=f"{ing_text} (qty: {ing_qty})")
             lbl.pack(side="left", padx=3)
@@ -197,7 +192,7 @@ class AddNalogWindow(tk.Toplevel):
         for row in rows:
             ing_text, ing_qty = row[0], row[1]
             self.ingredients.append((ing_text, ing_qty))
-            row_frame = tk.Frame(self.ingredients_frame)
+            row_frame = ttk.Frame(self.ingredients_frame)
             row_frame.pack(anchor="w", fill="x")
             lbl = tk.Label(row_frame, text=f"{ing_text} (qty: {ing_qty})")
             lbl.pack(side="left", padx=3)

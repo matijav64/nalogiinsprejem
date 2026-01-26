@@ -3,10 +3,12 @@ from tkinter import ttk, messagebox, simpledialog
 import sqlite3
 from utils import unify_string
 from db_manager import DatabaseManager
+from gui.theme import apply_theme
 
 class ExtraWindow(tk.Toplevel):
     def __init__(self, master, db_manager: DatabaseManager, e_target=None):
         super().__init__(master)
+        apply_theme(self)
         self.db = db_manager
         self.e_target = e_target
         self.title("Dodatna sestavina")
@@ -14,37 +16,35 @@ class ExtraWindow(tk.Toplevel):
         # Larger window & font
         self.geometry("600x400")
         self.minsize(600,400)
-        self.option_add("*Font", ("Segoe UI", 14))
-
         self.chosen_text = None
         self.chosen_qty = 0
         
         self.bind("<Escape>", lambda e: self.destroy())
 
-        tk.Label(self, text="Kategorija:").grid(row=0, column=0, padx=5, pady=5, sticky="e")
+        tk.Label(self, text="Kategorija:").grid(row=0, column=0, padx=10, pady=6, sticky="e")
         with sqlite3.connect(self.db.db_path) as conn:
             c = conn.cursor()
             c.execute("SELECT DISTINCT category FROM material_types ORDER BY category")
             cats = [r[0] for r in c.fetchall()]
         self.c_cat = ttk.Combobox(self, values=cats, state="readonly", width=25)
-        self.c_cat.grid(row=0, column=1, padx=5, pady=5)
+        self.c_cat.grid(row=0, column=1, padx=10, pady=6)
         self.c_cat.bind("<<ComboboxSelected>>", self.on_cat_select)
         
-        tk.Label(self, text="Podkategorija:").grid(row=1, column=0, padx=5, pady=5, sticky="e")
+        tk.Label(self, text="Podkategorija:").grid(row=1, column=0, padx=10, pady=6, sticky="e")
         self.c_sub = ttk.Combobox(self, values=[], state="readonly", width=25)
-        self.c_sub.grid(row=1, column=1, padx=5, pady=5)
+        self.c_sub.grid(row=1, column=1, padx=10, pady=6)
         self.c_sub.bind("<<ComboboxSelected>>", self.on_sub_select)
         
-        tk.Label(self, text="Izberi LOT:").grid(row=2, column=0, padx=5, pady=5, sticky="e")
+        tk.Label(self, text="Izberi LOT:").grid(row=2, column=0, padx=10, pady=6, sticky="e")
         self.c_lot = ttk.Combobox(self, values=[], state="readonly", width=35)
-        self.c_lot.grid(row=2, column=1, padx=5, pady=5)
+        self.c_lot.grid(row=2, column=1, padx=10, pady=6)
         
-        tk.Label(self, text="Količina (opcijsko):").grid(row=3, column=0, padx=5, pady=5, sticky="e")
+        tk.Label(self, text="Količina (opcijsko):").grid(row=3, column=0, padx=10, pady=6, sticky="e")
         self.e_qty = tk.Entry(self, width=10)
-        self.e_qty.grid(row=3, column=1, padx=5, pady=5)
+        self.e_qty.grid(row=3, column=1, padx=10, pady=6)
         
         btn = ttk.Button(self, text="Dodaj sestavino", command=self.add_ingredient)
-        btn.grid(row=4, column=0, columnspan=2, pady=10)
+        btn.grid(row=4, column=0, columnspan=2, pady=14)
         btn.bind("<Return>", lambda e: btn.invoke())
 
     def on_cat_select(self, event):
