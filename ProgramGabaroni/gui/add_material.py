@@ -225,7 +225,8 @@ class AddMaterialWindow(tk.Toplevel):
         if not typed:
             combobox["values"] = combobox._full_values
             return
-        matches = [val for val in combobox._full_values if val.lower().startswith(typed.lower())]
+        typed_lower = typed.lower()
+        matches = [val for val in combobox._full_values if typed_lower in val.lower()]
         if matches:
             combobox["values"] = matches
             self._open_combobox_dropdown(combobox)
@@ -250,6 +251,8 @@ class AddMaterialWindow(tk.Toplevel):
             widget.bind("<Tab>", self._on_tab_press)
 
     def _on_tab_press(self, event):
+        if event.widget in {self.e_datum, self.e_rok}:
+            self._auto_fill_year(event.widget)
         try:
             idx = self._tab_order.index(event.widget)
         except ValueError:
@@ -262,6 +265,11 @@ class AddMaterialWindow(tk.Toplevel):
             if isinstance(next_widget, ttk.Combobox):
                 self._open_combobox_dropdown(next_widget)
         return "break"
+
+    def _auto_fill_year(self, entry):
+        value = entry.get().strip()
+        if len(value) == 4 and value.isdigit():
+            entry.insert(tk.END, str(datetime.now().year))
 
     def save_material(self):
         d_val = unify_string(self.e_datum.get().strip())
