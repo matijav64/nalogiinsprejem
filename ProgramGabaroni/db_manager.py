@@ -1,18 +1,26 @@
+import logging
 import os
 import sqlite3
 from typing import List, Tuple
 from tkinter import messagebox
+
+
+def connect_db(db_path: str) -> sqlite3.Connection:
+    conn = sqlite3.connect(db_path)
+    conn.execute("PRAGMA foreign_keys = ON")
+    return conn
+
 
 class DatabaseManager:
     def __init__(self, db_path="sledenje.db"):
         abs_path = os.path.abspath(db_path)
         self.db_path = abs_path
 
-        print(f"Using DB: {abs_path}")
+        logging.info("Using DB: %s", abs_path)
 
         if not os.path.exists(abs_path):
             warn_msg = f"Database does not exist and will be created: {abs_path}"
-            print(warn_msg)
+            logging.warning(warn_msg)
             try:
                 messagebox.showwarning("Podatkovna baza", warn_msg)
             except Exception:
@@ -20,8 +28,11 @@ class DatabaseManager:
 
         self.init_db()
 
+    def connect(self) -> sqlite3.Connection:
+        return connect_db(self.db_path)
+
     def init_db(self):
-        with sqlite3.connect(self.db_path) as conn:
+        with self.connect() as conn:
             c = conn.cursor()
             # Suppliers table with extra columns
             c.execute('''CREATE TABLE IF NOT EXISTS suppliers (
@@ -68,7 +79,11 @@ class DatabaseManager:
                 person_id INTEGER NOT NULL,
                 material_type_id INTEGER NOT NULL,
                 generirana_koda TEXT,
-                kolicina REAL
+                kolicina REAL,
+                FOREIGN KEY(supplier_id) REFERENCES suppliers(id),
+                FOREIGN KEY(carrier_id) REFERENCES carriers(id),
+                FOREIGN KEY(person_id) REFERENCES persons(id),
+                FOREIGN KEY(material_type_id) REFERENCES material_types(id)
             )''')
             # Delovni nalog (work orders) – fixed columns only for core info
             c.execute('''CREATE TABLE IF NOT EXISTS delovni_nalog (
@@ -78,7 +93,8 @@ class DatabaseManager:
                 izbrani_lot TEXT,
                 nova_oblika TEXT,
                 kolicina REAL,
-                nov_lot TEXT
+                nov_lot TEXT,
+                FOREIGN KEY(lot_prejsnji_id) REFERENCES prejeti_materiali(id)
             )''')
             # Product shapes
             c.execute('''CREATE TABLE IF NOT EXISTS product_shapes (
@@ -101,8 +117,15 @@ class DatabaseManager:
             c.execute('''CREATE TABLE IF NOT EXISTS zaloge (
                 id INTEGER PRIMARY KEY,
                 material_type_id INTEGER NOT NULL,
-                kolicina REAL NOT NULL DEFAULT 0
+                kolicina REAL NOT NULL DEFAULT 0,
+                FOREIGN KEY(material_type_id) REFERENCES material_types(id)
             )''')
+            c.execute("CREATE INDEX IF NOT EXISTS idx_prejeti_materiali_supplier ON prejeti_materiali(supplier_id)")
+            c.execute("CREATE INDEX IF NOT EXISTS idx_prejeti_materiali_person ON prejeti_materiali(person_id)")
+            c.execute("CREATE INDEX IF NOT EXISTS idx_prejeti_materiali_material_type ON prejeti_materiali(material_type_id)")
+            c.execute("CREATE INDEX IF NOT EXISTS idx_delovni_nalog_lot_prejsnji ON delovni_nalog(lot_prejsnji_id)")
+            c.execute("CREATE INDEX IF NOT EXISTS idx_delovni_nalog_sestavine_nalog ON delovni_nalog_sestavine(delovni_nalog_id)")
+            c.execute("CREATE INDEX IF NOT EXISTS idx_zaloge_material_type ON zaloge(material_type_id)")
             conn.commit()
 
             # Insert default entries if tables are empty
@@ -174,13 +197,13 @@ class DatabaseManager:
             conn.commit()
 
     def get_subcategories(self, cat: str) -> List[Tuple[str, str]]:
-        with sqlite3.connect(self.db_path) as conn:
+        with self.connect() as conn:
             cu = conn.cursor()
             cu.execute("SELECT subcategory, code FROM material_types WHERE category=? ORDER BY subcategory", (cat,))
             return cu.fetchall()
 
     def get_shapes(self) -> List[Tuple[str, str]]:
-        with sqlite3.connect(self.db_path) as conn:
+        with self.connect() as conn:
             cu = conn.cursor()
             cu.execute(
                 "SELECT name, abbreviation FROM product_shapes ORDER BY display_order, name"
@@ -188,7 +211,7 @@ class DatabaseManager:
             return cu.fetchall()
 
     def get_or_create_material_type(self, cat: str, subc: str, code: str) -> int:
-        with sqlite3.connect(self.db_path) as conn:
+        with self.connect() as conn:
             cu = conn.cursor()
             cu.execute("SELECT id FROM material_types WHERE category=? AND subcategory=?", (cat, subc))
             row = cu.fetchone()
@@ -200,7 +223,7 @@ class DatabaseManager:
             return cu.lastrowid
 
     def update_stock(self, material_type_id: int, qty_diff: float):
-        with sqlite3.connect(self.db_path) as conn:
+        with self.connect() as conn:
             c = conn.cursor()
             c.execute("SELECT slediti FROM material_types WHERE id=?", (material_type_id,))
             row = c.fetchone()
@@ -216,7 +239,7 @@ class DatabaseManager:
             conn.commit()
 
     def set_stock(self, material_type_id: int, new_qty: float):
-        with sqlite3.connect(self.db_path) as conn:
+        with self.connect() as conn:
             c = conn.cursor()
             c.execute("SELECT id FROM zaloge WHERE material_type_id=?", (material_type_id,))
             row = c.fetchone()

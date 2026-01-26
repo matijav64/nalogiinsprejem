@@ -1,4 +1,5 @@
 import importlib
+import logging
 import os
 import shutil
 import sys
@@ -36,7 +37,7 @@ def ensure_dependencies():
         msg_lines.append("ali: conda install -c conda-forge pandas reportlab")
         full_msg = "\n".join(msg_lines)
 
-        print(full_msg, file=sys.stderr)
+        logging.error(full_msg)
         try:
             root = tk.Tk()
             root.withdraw()
@@ -59,9 +60,9 @@ def resolve_db_path():
             if custom_path and os.path.exists(custom_path):
                 return custom_path
             else:
-                print(f"Saved DB path not found, falling back to default: {custom_path}")
+                logging.warning("Saved DB path not found, falling back to default: %s", custom_path)
         except OSError:
-            print("Could not read db_path.txt, falling back to default.")
+            logging.warning("Could not read db_path.txt, falling back to default.")
 
     return DB_IN_CODE_DIR
 
@@ -108,7 +109,7 @@ class App(tk.Tk):
         make_menu_button("Izberi bazo (sledenje.db)", self.pick_db)
         make_menu_button("Izhod", self.destroy)
 
-        self.after(0, lambda: messagebox.showinfo("Podatkovna baza", f"Using DB: {self.db_path}"))
+        logging.info("Using DB: %s", self.db_path)
 
     # We no longer have on_enter() at the root level
 
@@ -158,13 +159,14 @@ class App(tk.Tk):
             return
 
         self.db_path = abs_path
-        print(f"Using DB: {self.db_path}")
+        logging.info("Using DB: %s", self.db_path)
         messagebox.showinfo("Podatkovna baza", f"Using DB: {self.db_path}")
         self.db_manager = DatabaseManager(self.db_path)
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
     ensure_dependencies()
     selected_db = resolve_db_path()
-    print(f"Using DB: {os.path.abspath(selected_db)}")
+    logging.info("Using DB: %s", os.path.abspath(selected_db))
     app = App(selected_db)
     app.mainloop()

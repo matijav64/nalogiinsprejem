@@ -25,7 +25,7 @@ class EditRawMaterialsWindow(tk.Toplevel):
 
     def refresh_tree(self):
         self.tree.delete(*self.tree.get_children())
-        with sqlite3.connect(self.db.db_path) as conn:
+        with self.db.connect() as conn:
             c = conn.cursor()
             c.execute("SELECT id, category, subcategory, code, slediti FROM material_types ORDER BY category, subcategory")
             rows = c.fetchall()
@@ -47,7 +47,7 @@ class EditRawMaterialsWindow(tk.Toplevel):
             messagebox.showinfo("Info", "Izberi podkategorijo, ne kategorijo.")
             return
         rid = vals[0]
-        with sqlite3.connect(self.db.db_path) as conn:
+        with self.db.connect() as conn:
             c = conn.cursor()
             c.execute("SELECT id, category, subcategory, code, slediti FROM material_types WHERE id=?", (rid,))
             record = c.fetchone()
@@ -59,7 +59,7 @@ class EditRawMaterialsWindow(tk.Toplevel):
     def add_cat(self):
         new_cat = simpledialog.askstring("Nova kategorija", "Ime kategorije:")
         if new_cat:
-            with sqlite3.connect(self.db.db_path) as conn:
+            with self.db.connect() as conn:
                 c = conn.cursor()
                 # Here we insert a new category with a default subcategory and code.
                 c.execute("INSERT INTO material_types (category, subcategory, code, slediti) VALUES (?, ?, ?, 1)",
@@ -75,7 +75,7 @@ class EditRawMaterialsWindow(tk.Toplevel):
                 new_sub = simpledialog.askstring("Podkategorija?", "Ime podkategorije:")
                 new_code = simpledialog.askstring("Koda?", "Koda (npr. ??):")
                 if new_sub and new_code:
-                    with sqlite3.connect(self.db.db_path) as conn:
+                    with self.db.connect() as conn:
                         c = conn.cursor()
                         c.execute("INSERT INTO material_types (category, subcategory, code, slediti) VALUES (?, ?, ?, 1)",
                                   (new_cat, new_sub, new_code))
@@ -90,7 +90,7 @@ class EditRawMaterialsWindow(tk.Toplevel):
                 new_sub = simpledialog.askstring("Podkategorija?", f"Podkategorija za {cat}:")
                 new_code = simpledialog.askstring("Koda?", "Koda (npr. ??):")
                 if new_sub and new_code:
-                    with sqlite3.connect(self.db.db_path) as conn:
+                    with self.db.connect() as conn:
                         c = conn.cursor()
                         c.execute("INSERT INTO material_types (category, subcategory, code, slediti) VALUES (?, ?, ?, 1)",
                                   (cat, new_sub, new_code))
@@ -108,7 +108,7 @@ class EditRawMaterialsWindow(tk.Toplevel):
             # If a category is selected, delete all rows with that category
             cat = self.tree.item(sel[0], "text")
             if messagebox.askyesno("Brisanje", f"Brisati celotno kategorijo {cat}?"):
-                with sqlite3.connect(self.db.db_path) as conn:
+                with self.db.connect() as conn:
                     c = conn.cursor()
                     c.execute("DELETE FROM material_types WHERE category=?", (cat,))
                     conn.commit()
@@ -116,7 +116,7 @@ class EditRawMaterialsWindow(tk.Toplevel):
         else:
             rid = vals[0]
             if messagebox.askyesno("Brisanje", "Brisati to surovino?"):
-                with sqlite3.connect(self.db.db_path) as conn:
+                with self.db.connect() as conn:
                     c = conn.cursor()
                     c.execute("DELETE FROM material_types WHERE id=?", (rid,))
                     conn.commit()
@@ -141,7 +141,7 @@ class EditSuppliersWindow(tk.Toplevel):
     def refresh_tree(self):
         for i in self.tree.get_children():
             self.tree.delete(i)
-        with sqlite3.connect(self.db.db_path) as conn:
+        with self.db.connect() as conn:
             c = conn.cursor()
             c.execute("SELECT id, name FROM suppliers ORDER BY name")
             for row in c.fetchall():
@@ -158,7 +158,7 @@ class EditSuppliersWindow(tk.Toplevel):
     def add_supplier(self):
         name = tk.simpledialog.askstring("Dodaj dobavitelja", "Ime dobavitelja:")
         if name:
-            with sqlite3.connect(self.db.db_path) as conn:
+            with self.db.connect() as conn:
                 c = conn.cursor()
                 c.execute("INSERT INTO suppliers (name) VALUES (?)", (name,))
                 conn.commit()
@@ -183,7 +183,7 @@ class EditCarriersWindow(tk.Toplevel):
     def refresh_tree(self):
         for i in self.tree.get_children():
             self.tree.delete(i)
-        with sqlite3.connect(self.db.db_path) as conn:
+        with self.db.connect() as conn:
             c = conn.cursor()
             c.execute("SELECT id, name FROM carriers ORDER BY name")
             for row in c.fetchall():
@@ -200,7 +200,7 @@ class EditCarriersWindow(tk.Toplevel):
     def add_carrier(self):
         name = tk.simpledialog.askstring("Dodaj prevoznika", "Ime prevoznika:")
         if name:
-            with sqlite3.connect(self.db.db_path) as conn:
+            with self.db.connect() as conn:
                 c = conn.cursor()
                 c.execute("INSERT INTO carriers (name) VALUES (?)", (name,))
                 conn.commit()
@@ -225,7 +225,7 @@ class EditPersonsWindow(tk.Toplevel):
     def refresh_tree(self):
         for i in self.tree.get_children():
             self.tree.delete(i)
-        with sqlite3.connect(self.db.db_path) as conn:
+        with self.db.connect() as conn:
             c = conn.cursor()
             c.execute("SELECT id, name FROM persons ORDER BY name")
             for row in c.fetchall():
@@ -242,7 +242,7 @@ class EditPersonsWindow(tk.Toplevel):
     def add_person(self):
         name = tk.simpledialog.askstring("Dodaj prejemca", "Ime prejemca:")
         if name:
-            with sqlite3.connect(self.db.db_path) as conn:
+            with self.db.connect() as conn:
                 c = conn.cursor()
                 c.execute("INSERT INTO persons (name) VALUES (?)", (name,))
                 conn.commit()
@@ -274,7 +274,7 @@ class EditShapesWindow(tk.Toplevel):
     def refresh_tree(self):
         for i in self.tree.get_children():
             self.tree.delete(i)
-        with sqlite3.connect(self.db.db_path) as conn:
+        with self.db.connect() as conn:
             c = conn.cursor()
             c.execute(
                 "SELECT id, name, abbreviation, display_order FROM product_shapes ORDER BY display_order, name"
@@ -298,7 +298,7 @@ class EditShapesWindow(tk.Toplevel):
             messagebox.showerror("Napaka", "Vrstni red mora biti številka.")
             return
         try:
-            with sqlite3.connect(self.db.db_path) as conn:
+            with self.db.connect() as conn:
                 c = conn.cursor()
                 c.execute(
                     "INSERT INTO product_shapes (name, abbreviation, display_order) VALUES (?, ?, ?)",
@@ -335,7 +335,7 @@ class EditShapesWindow(tk.Toplevel):
             messagebox.showerror("Napaka", "Vrstni red mora biti številka.")
             return
         try:
-            with sqlite3.connect(self.db.db_path) as conn:
+            with self.db.connect() as conn:
                 c = conn.cursor()
                 c.execute(
                     "UPDATE product_shapes SET name=?, abbreviation=?, display_order=? WHERE id=?",
@@ -357,7 +357,7 @@ class EditShapesWindow(tk.Toplevel):
         if not messagebox.askyesno("Brisanje", "Brisati izbrano obliko?"):
             return
         shape_id = rec[0]
-        with sqlite3.connect(self.db.db_path) as conn:
+        with self.db.connect() as conn:
             c = conn.cursor()
             c.execute("DELETE FROM product_shapes WHERE id=?", (shape_id,))
             conn.commit()

@@ -1,6 +1,5 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
-import sqlite3
 from datetime import datetime
 from utils import unify_string, parse_datum
 from db_manager import DatabaseManager
@@ -158,7 +157,7 @@ class AddNalogWindow(tk.Toplevel):
 
     def load_lot_options(self, sub_name):
         combos = []
-        with sqlite3.connect(self.db.db_path) as conn:
+        with self.db.connect() as conn:
             c = conn.cursor()
             c.execute("SELECT id FROM material_types WHERE category=? AND subcategory=?", (self.moka_category, sub_name))
             mt_row = c.fetchone()
@@ -209,7 +208,7 @@ class AddNalogWindow(tk.Toplevel):
             btn_x.pack(side="right", padx=3)
 
     def fill_data(self):
-        with sqlite3.connect(self.db.db_path) as conn:
+        with self.db.connect() as conn:
             c = conn.cursor()
             c.execute("""
                 SELECT datum_dela, izbrani_lot, nova_oblika, kolicina, nov_lot, lot_prejsnji_id
@@ -241,7 +240,7 @@ class AddNalogWindow(tk.Toplevel):
             try:
                 after_paren = chosen_lot.split(") ")[1]
                 code_part = after_paren.split("-")[0].strip()
-                with sqlite3.connect(self.db.db_path) as conn:
+                with self.db.connect() as conn:
                     c = conn.cursor()
                     c.execute("SELECT subcategory FROM material_types WHERE category=? AND code=?",
                               (self.moka_category, code_part))
@@ -253,7 +252,7 @@ class AddNalogWindow(tk.Toplevel):
             except:
                 pass
 
-        with sqlite3.connect(self.db.db_path) as conn:
+        with self.db.connect() as conn:
             c = conn.cursor()
             c.execute("SELECT sestavina, kolicina FROM delovni_nalog_sestavine WHERE delovni_nalog_id=?",
                       (self.nalog_id,))
@@ -311,7 +310,7 @@ class AddNalogWindow(tk.Toplevel):
             lot_suffix = shape_val.split()[-1] if shape_val.split() else ""
         nov_lot = f"{lot_suffix}-{d_fmt}" if lot_suffix else d_fmt
 
-        with sqlite3.connect(self.db.db_path) as conn:
+        with self.db.connect() as conn:
             c = conn.cursor()
 
             # Find the material type of the selected LOT for stock adjustments
@@ -345,7 +344,7 @@ class AddNalogWindow(tk.Toplevel):
 
         # Adjust stock: restore old usage if editing, then subtract new usage
         if self.nalog_id and self.old_lot_id:
-            with sqlite3.connect(self.db.db_path) as conn:
+            with self.db.connect() as conn:
                 c = conn.cursor()
                 c.execute("SELECT material_type_id FROM prejeti_materiali WHERE id=?", (self.old_lot_id,))
                 old_mt = c.fetchone()

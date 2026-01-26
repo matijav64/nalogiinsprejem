@@ -1,6 +1,5 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
-import sqlite3
 from db_manager import DatabaseManager
 from utils import unify_string
 from gui.theme import apply_theme
@@ -54,7 +53,7 @@ class EditSingleRawMaterialWindow(tk.Toplevel):
         if not new_cat or not new_sub or not new_code:
             messagebox.showerror("Napaka", "Prazna polja!")
             return
-        with sqlite3.connect(self.db.db_path) as conn:
+        with self.db.connect() as conn:
             c = conn.cursor()
             c.execute("""
                 UPDATE material_types

@@ -1,6 +1,5 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
-import sqlite3
 from db_manager import DatabaseManager
 from utils import unify_string
 from gui.theme import apply_theme
@@ -53,7 +52,7 @@ class EditCarrierWindow(tk.Toplevel):
         self.fill_data()
 
     def fill_data(self):
-        with sqlite3.connect(self.db.db_path) as conn:
+        with self.db.connect() as conn:
             c = conn.cursor()
             c.execute("SELECT name, address, phone, email, notes FROM carriers WHERE id=?", (self.carrier_id,))
             row = c.fetchone()
@@ -74,7 +73,7 @@ class EditCarrierWindow(tk.Toplevel):
         if not name:
             messagebox.showerror("Napaka", "Ime je obvezno!")
             return
-        with sqlite3.connect(self.db.db_path) as conn:
+        with self.db.connect() as conn:
             c = conn.cursor()
             c.execute("""
                 UPDATE carriers

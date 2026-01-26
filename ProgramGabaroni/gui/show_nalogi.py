@@ -1,6 +1,5 @@
 import tkinter as tk
 from tkinter import ttk, messagebox, filedialog
-import sqlite3
 from utils import unify_string, format_ymd_to_ddmmYYYY
 from export_utils import export_data_dialog
 from gui.theme import apply_theme
@@ -108,7 +107,7 @@ class ShowNalogiWindow(tk.Toplevel):
         if where_clauses:
             where_sql = " WHERE " + " AND ".join(where_clauses)
         query += f"{where_sql} ORDER BY d.id DESC LIMIT ? OFFSET ?"
-        with sqlite3.connect(self.db.db_path) as conn:
+        with self.db.connect() as conn:
             conn.create_function("FORMAT_DATE", 1, format_ymd_to_ddmmYYYY)
             conn.create_function("LOWER", 1, lambda s: s.lower() if s else "")
             c = conn.cursor()

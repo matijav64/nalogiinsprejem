@@ -1,6 +1,5 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
-import sqlite3
 from db_manager import DatabaseManager
 from utils import unify_string
 from gui.theme import apply_theme
@@ -30,7 +29,7 @@ class EditNalogWindow(tk.Toplevel):
             messagebox.showerror("Napaka", "ID mora biti število.")
             return
         nalog_id = int(val_str)
-        with sqlite3.connect(self.db.db_path) as conn:
+        with self.db.connect() as conn:
             c = conn.cursor()
             c.execute("SELECT izbrani_lot FROM delovni_nalog WHERE id=?", (nalog_id,))
             row = c.fetchone()
@@ -51,7 +50,7 @@ class EditNalogWindow(tk.Toplevel):
             messagebox.showerror("Napaka", "Prazna vrednost.")
             return
 
-        with sqlite3.connect(self.db.db_path) as conn:
+        with self.db.connect() as conn:
             c = conn.cursor()
             c.execute("UPDATE delovni_nalog SET izbrani_lot=? WHERE id=?", (new_val, nalog_id))
             conn.commit()

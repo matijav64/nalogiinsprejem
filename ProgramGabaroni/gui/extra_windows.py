@@ -1,6 +1,5 @@
 import tkinter as tk
 from tkinter import ttk, messagebox, simpledialog
-import sqlite3
 from utils import unify_string
 from db_manager import DatabaseManager
 from gui.theme import apply_theme
@@ -22,7 +21,7 @@ class ExtraWindow(tk.Toplevel):
         self.bind("<Escape>", lambda e: self.destroy())
 
         tk.Label(self, text="Kategorija:").grid(row=0, column=0, padx=10, pady=6, sticky="e")
-        with sqlite3.connect(self.db.db_path) as conn:
+        with self.db.connect() as conn:
             c = conn.cursor()
             c.execute("SELECT DISTINCT category FROM material_types ORDER BY category")
             cats = [r[0] for r in c.fetchall()]
@@ -51,7 +50,7 @@ class ExtraWindow(tk.Toplevel):
         cat = unify_string(self.c_cat.get().strip())
         if not cat:
             return
-        with sqlite3.connect(self.db.db_path) as conn:
+        with self.db.connect() as conn:
             c = conn.cursor()
             c.execute("SELECT subcategory, code FROM material_types WHERE category=? ORDER BY subcategory", (cat,))
             subs = c.fetchall()
@@ -71,7 +70,7 @@ class ExtraWindow(tk.Toplevel):
     
     def load_lot_options(self, cat, sub):
         lot_options = []
-        with sqlite3.connect(self.db.db_path) as conn:
+        with self.db.connect() as conn:
             c = conn.cursor()
             c.execute("SELECT id FROM material_types WHERE category=? AND subcategory=?", (cat, sub))
             mt_row = c.fetchone()

@@ -1,25 +1,24 @@
 import tkinter as tk
 from tkinter import ttk, messagebox, simpledialog
-import sqlite3
 from datetime import datetime
 from utils import unify_string, parse_datum, format_ymd_to_ddmmYYYY
-from db_manager import DatabaseManager
+from db_manager import DatabaseManager, connect_db
 from gui.theme import apply_theme
 
 def fetch_suppliers(db_path):
-    with sqlite3.connect(db_path) as conn:
+    with connect_db(db_path) as conn:
         c = conn.cursor()
         c.execute("SELECT name FROM suppliers ORDER BY name")
         return [r[0] for r in c.fetchall()]
 
 def fetch_carriers(db_path):
-    with sqlite3.connect(db_path) as conn:
+    with connect_db(db_path) as conn:
         c = conn.cursor()
         c.execute("SELECT name FROM carriers ORDER BY name")
         return [r[0] for r in c.fetchall()]
 
 def fetch_persons(db_path):
-    with sqlite3.connect(db_path) as conn:
+    with connect_db(db_path) as conn:
         c = conn.cursor()
         c.execute("SELECT name FROM persons ORDER BY name")
         return [r[0] for r in c.fetchall()]
@@ -81,7 +80,7 @@ class AddMaterialWindow(tk.Toplevel):
         btn_new_person.bind("<Return>", lambda e: btn_new_person.invoke())
         row += 1
         tk.Label(self, text="Kategorija:").grid(row=row, column=0, sticky="e", padx=5, pady=3)
-        with sqlite3.connect(self.db.db_path) as conn:
+        with self.db.connect() as conn:
             cu = conn.cursor()
             cu.execute("SELECT DISTINCT category FROM material_types ORDER BY category")
             cat_list = [r[0] for r in cu.fetchall()]
@@ -118,7 +117,7 @@ class AddMaterialWindow(tk.Toplevel):
     def add_new_supplier(self):
         val = tk.simpledialog.askstring("Nov dobavitelj", "Ime dobavitelja:")
         if val:
-            with sqlite3.connect(self.db.db_path) as conn:
+            with self.db.connect() as conn:
                 c = conn.cursor()
                 c.execute("INSERT OR IGNORE INTO suppliers (name) VALUES (?)", (val,))
                 conn.commit()
@@ -129,7 +128,7 @@ class AddMaterialWindow(tk.Toplevel):
     def add_new_carrier(self):
         val = tk.simpledialog.askstring("Nov prevoznik", "Ime prevoznika:")
         if val:
-            with sqlite3.connect(self.db.db_path) as conn:
+            with self.db.connect() as conn:
                 c = conn.cursor()
                 c.execute("INSERT OR IGNORE INTO carriers (name) VALUES (?)", (val,))
                 conn.commit()
@@ -140,7 +139,7 @@ class AddMaterialWindow(tk.Toplevel):
     def add_new_person(self):
         val = tk.simpledialog.askstring("Nova oseba", "Ime osebe:")
         if val:
-            with sqlite3.connect(self.db.db_path) as conn:
+            with self.db.connect() as conn:
                 c = conn.cursor()
                 c.execute("INSERT OR IGNORE INTO persons (name) VALUES (?)", (val,))
                 conn.commit()
@@ -153,7 +152,7 @@ class AddMaterialWindow(tk.Toplevel):
         if not cat:
             return
         # Use DISTINCT to avoid duplicate subcategories (e.g., duplicate Blitva)
-        with sqlite3.connect(self.db.db_path) as conn:
+        with self.db.connect() as conn:
             cu = conn.cursor()
             cu.execute("SELECT DISTINCT subcategory, code FROM material_types WHERE category=? ORDER BY subcategory", (cat,))
             subs = cu.fetchall()
@@ -163,7 +162,7 @@ class AddMaterialWindow(tk.Toplevel):
             self.c_sub.set(f"{subs[0][1]} {subs[0][0]}")
 
     def fill_data(self):
-        with sqlite3.connect(self.db.db_path) as conn:
+        with self.db.connect() as conn:
             c = conn.cursor()
             c.execute("""
                 SELECT datum_prejema, supplier_id, carrier_id, rok_uporabe, embalaza_ok,
@@ -183,7 +182,7 @@ class AddMaterialWindow(tk.Toplevel):
             self.e_datum.insert(0, rec[0])
         self.e_rok.insert(0, format_ymd_to_ddmmYYYY(rec[3]) if rec[3] else "")
         # For editing, we now fill the supplier/carrier/person fields from DB:
-        with sqlite3.connect(self.db.db_path) as conn:
+        with self.db.connect() as conn:
             c = conn.cursor()
             if rec[1]:
                 c.execute("SELECT name FROM suppliers WHERE id=?", (rec[1],))
@@ -330,7 +329,7 @@ class AddMaterialWindow(tk.Toplevel):
         gen_code = f"{sub_code}-{d_fmt}"
         mt_id = self.db.get_or_create_material_type(cat_val, sub_name, sub_code)
 
-        with sqlite3.connect(self.db.db_path) as conn:
+        with self.db.connect() as conn:
             c = conn.cursor()
             def get_or_create_id(table, name):
                 if not name:
