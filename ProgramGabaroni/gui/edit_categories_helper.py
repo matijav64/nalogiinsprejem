@@ -242,3 +242,117 @@ class EditPersonsWindow(tk.Toplevel):
                 c.execute("INSERT INTO persons (name) VALUES (?)", (name,))
                 conn.commit()
             self.refresh_tree()
+
+class EditShapesWindow(tk.Toplevel):
+    def __init__(self, master, db_manager: DatabaseManager):
+        super().__init__(master)
+        self.db = db_manager
+        self.title("Uredi oblike")
+        self.geometry("600x350")
+        self.bind("<Escape>", lambda e: self.destroy())
+        self.tree = ttk.Treeview(self, columns=("ID", "Ime", "Kratica", "VrstniRed"), show="headings")
+        self.tree.heading("ID", text="ID")
+        self.tree.heading("Ime", text="Ime")
+        self.tree.heading("Kratica", text="Kratica")
+        self.tree.heading("VrstniRed", text="Vrstni red")
+        self.tree.pack(fill="both", expand=True)
+        self.tree.bind("<Double-1>", self.edit_shape)
+
+        frm = tk.Frame(self)
+        frm.pack(fill="x")
+        ttk.Button(frm, text="Dodaj obliko", command=self.add_shape).pack(side="left", padx=5, pady=5)
+        ttk.Button(frm, text="Uredi izbrano", command=self.edit_shape).pack(side="left", padx=5, pady=5)
+        ttk.Button(frm, text="Briši izbrano", command=self.delete_shape).pack(side="left", padx=5, pady=5)
+        self.refresh_tree()
+
+    def refresh_tree(self):
+        for i in self.tree.get_children():
+            self.tree.delete(i)
+        with sqlite3.connect(self.db.db_path) as conn:
+            c = conn.cursor()
+            c.execute(
+                "SELECT id, name, abbreviation, display_order FROM product_shapes ORDER BY display_order, name"
+            )
+            for row in c.fetchall():
+                self.tree.insert("", "end", values=row)
+
+    def add_shape(self):
+        name = simpledialog.askstring("Nova oblika", "Ime oblike:")
+        if not name:
+            return
+        abbreviation = simpledialog.askstring("Kratica", "Kratica (npr. ŠR):")
+        if not abbreviation:
+            return
+        order_str = simpledialog.askstring("Vrstni red", "Vrstni red (številka):")
+        if not order_str:
+            return
+        try:
+            order = int(order_str)
+        except ValueError:
+            messagebox.showerror("Napaka", "Vrstni red mora biti številka.")
+            return
+        try:
+            with sqlite3.connect(self.db.db_path) as conn:
+                c = conn.cursor()
+                c.execute(
+                    "INSERT INTO product_shapes (name, abbreviation, display_order) VALUES (?, ?, ?)",
+                    (name, abbreviation, order),
+                )
+                conn.commit()
+        except sqlite3.IntegrityError:
+            messagebox.showerror("Napaka", "Oblika ali kratica že obstaja.")
+            return
+        self.refresh_tree()
+
+    def edit_shape(self, event=None):
+        item = self.tree.focus()
+        if not item:
+            return
+        rec = self.tree.item(item)["values"]
+        if not rec:
+            return
+        shape_id, name, abbreviation, display_order = rec
+        new_name = simpledialog.askstring("Uredi obliko", "Ime oblike:", initialvalue=name)
+        if not new_name:
+            return
+        new_abbreviation = simpledialog.askstring("Uredi kratico", "Kratica:", initialvalue=abbreviation)
+        if not new_abbreviation:
+            return
+        new_order_str = simpledialog.askstring(
+            "Uredi vrstni red", "Vrstni red (številka):", initialvalue=str(display_order)
+        )
+        if not new_order_str:
+            return
+        try:
+            new_order = int(new_order_str)
+        except ValueError:
+            messagebox.showerror("Napaka", "Vrstni red mora biti številka.")
+            return
+        try:
+            with sqlite3.connect(self.db.db_path) as conn:
+                c = conn.cursor()
+                c.execute(
+                    "UPDATE product_shapes SET name=?, abbreviation=?, display_order=? WHERE id=?",
+                    (new_name, new_abbreviation, new_order, shape_id),
+                )
+                conn.commit()
+        except sqlite3.IntegrityError:
+            messagebox.showerror("Napaka", "Oblika ali kratica že obstaja.")
+            return
+        self.refresh_tree()
+
+    def delete_shape(self):
+        item = self.tree.focus()
+        if not item:
+            return
+        rec = self.tree.item(item)["values"]
+        if not rec:
+            return
+        if not messagebox.askyesno("Brisanje", "Brisati izbrano obliko?"):
+            return
+        shape_id = rec[0]
+        with sqlite3.connect(self.db.db_path) as conn:
+            c = conn.cursor()
+            c.execute("DELETE FROM product_shapes WHERE id=?", (shape_id,))
+            conn.commit()
+        self.refresh_tree()

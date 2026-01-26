@@ -51,26 +51,13 @@ class AddNalogWindow(tk.Toplevel):
         row += 1
 
         tk.Label(self, text="Oblika izdelka:").grid(row=row, column=0, sticky="e", padx=5, pady=5)
-        shapes = [
-            ("1) Široki rezanci", "ŠR"),
-            ("2) Jušni rezanci", "JR"),
-            ("3) Špageti 3", "ŠP3"),
-            ("4) Špageti 5", "ŠP5"),
-            ("5) Svedri", "SV"),
-            ("6) Zmešančki", "Z"),
-            ("7) Rožice", "R"),
-            ("8) Školjke", "ŠK"),
-            ("9) Peresniki", "PR"),
-            ("10) Kodrčki", "K"),
-            ("11) Fužije", "F"),
-            ("12) Njokci", "N"),
-            ("13) Tuneli", "T"),
-            ("14) Polperesniki", "PP"),
-            ("15) Lazanja", "L"),
-            ("16) Obročki", "O"),
-        ]
-        self.c_shape = ttk.Combobox(self, values=[f"{n} - {abbr}" for n, abbr in shapes],
-                                    state="readonly", width=35)
+        shapes = self.db.get_shapes()
+        self.c_shape = ttk.Combobox(
+            self,
+            values=[f"{name} - {abbr}" for name, abbr in shapes],
+            state="readonly",
+            width=35,
+        )
         self.c_shape.grid(row=row, column=1, padx=5, pady=5)
         row += 1
 
