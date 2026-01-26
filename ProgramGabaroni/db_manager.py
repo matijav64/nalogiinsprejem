@@ -80,6 +80,15 @@ class DatabaseManager:
                 kolicina REAL,
                 nov_lot TEXT
             )''')
+            # Product shapes
+            c.execute('''CREATE TABLE IF NOT EXISTS product_shapes (
+                id INTEGER PRIMARY KEY,
+                name TEXT NOT NULL,
+                abbreviation TEXT NOT NULL,
+                display_order INTEGER NOT NULL DEFAULT 0,
+                UNIQUE(name),
+                UNIQUE(abbreviation)
+            )''')
             # Dynamic ingredients for work orders
             c.execute('''CREATE TABLE IF NOT EXISTS delovni_nalog_sestavine (
                 id INTEGER PRIMARY KEY,
@@ -137,12 +146,45 @@ class DatabaseManager:
             if c.fetchone()[0] == 0:
                 for p in ["Matija", "Nastja", "Sabina"]:
                     c.execute("INSERT INTO persons (name) VALUES (?)", (p,))
+            # Product shapes defaults
+            c.execute("SELECT COUNT(*) FROM product_shapes")
+            if c.fetchone()[0] == 0:
+                shapes = [
+                    ("1) Široki rezanci", "ŠR", 1),
+                    ("2) Jušni rezanci", "JR", 2),
+                    ("3) Špageti 3", "ŠP3", 3),
+                    ("4) Špageti 5", "ŠP5", 4),
+                    ("5) Svedri", "SV", 5),
+                    ("6) Zmešančki", "Z", 6),
+                    ("7) Rožice", "R", 7),
+                    ("8) Školjke", "ŠK", 8),
+                    ("9) Peresniki", "PR", 9),
+                    ("10) Kodrčki", "K", 10),
+                    ("11) Fužije", "F", 11),
+                    ("12) Njokci", "N", 12),
+                    ("13) Tuneli", "T", 13),
+                    ("14) Polperesniki", "PP", 14),
+                    ("15) Lazanja", "L", 15),
+                    ("16) Obročki", "O", 16),
+                ]
+                c.executemany(
+                    "INSERT INTO product_shapes (name, abbreviation, display_order) VALUES (?, ?, ?)",
+                    shapes,
+                )
             conn.commit()
 
     def get_subcategories(self, cat: str) -> List[Tuple[str, str]]:
         with sqlite3.connect(self.db_path) as conn:
             cu = conn.cursor()
             cu.execute("SELECT subcategory, code FROM material_types WHERE category=? ORDER BY subcategory", (cat,))
+            return cu.fetchall()
+
+    def get_shapes(self) -> List[Tuple[str, str]]:
+        with sqlite3.connect(self.db_path) as conn:
+            cu = conn.cursor()
+            cu.execute(
+                "SELECT name, abbreviation FROM product_shapes ORDER BY display_order, name"
+            )
             return cu.fetchall()
 
     def get_or_create_material_type(self, cat: str, subc: str, code: str) -> int:
