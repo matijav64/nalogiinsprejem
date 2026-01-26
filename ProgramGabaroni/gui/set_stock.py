@@ -20,8 +20,7 @@ class SetStockWindow(tk.Toplevel):
 
         tk.Label(self, text="Izberi kategorijo:").grid(row=0, column=0, sticky="e", padx=5, pady=5)
         self.cat_cb = ttk.Combobox(self, state="readonly", width=20)
-        self.cat_cb['values'] = ["Moka", "Sok", "Zelenjava", "Dodatki"]
-        self.cat_cb.current(0)
+        self.load_categories()
         self.cat_cb.grid(row=0, column=1, padx=5, pady=5)
         self.cat_cb.bind("<<ComboboxSelected>>", self.update_subcategories)
 
@@ -45,6 +44,17 @@ class SetStockWindow(tk.Toplevel):
         btn_cancel.bind("<Return>", lambda e: btn_cancel.invoke())
 
         self.update_subcategories(None)
+
+    def load_categories(self):
+        with sqlite3.connect(self.db.db_path) as conn:
+            c = conn.cursor()
+            c.execute("SELECT DISTINCT category FROM material_types ORDER BY category")
+            categories = [row[0] for row in c.fetchall()]
+        self.cat_cb['values'] = categories
+        if categories:
+            self.cat_cb.current(0)
+        else:
+            self.cat_cb.set("")
 
     def update_subcategories(self, event=None):
         cat = self.cat_cb.get().strip()

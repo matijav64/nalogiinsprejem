@@ -211,8 +211,8 @@ class AddMaterialWindow(tk.Toplevel):
         sklad_val = unify_string(self.e_sklad.get().strip())
         rekl_val = unify_string(self.e_rekl.get().strip())
         kol_str = unify_string(self.e_kol.get().strip().replace(",", "."))
-        if not d_val or not cat_val or not sub_val or not dob_val or not kol_str:
-            messagebox.showerror("Napaka", "Manjkajo polja (datum, kategorija, dobavitelj, količina...)")
+        if not d_val or not cat_val or not sub_val or not dob_val or not per_val or not kol_str:
+            messagebox.showerror("Napaka", "Manjkajo polja (datum, kategorija, dobavitelj, prejemec, količina...)")
             return
         try:
             dd, d_fmt = parse_datum(d_val)
@@ -235,27 +235,42 @@ class AddMaterialWindow(tk.Toplevel):
 
         with sqlite3.connect(self.db.db_path) as conn:
             c = conn.cursor()
+            def get_or_create_id(table, name):
+                if not name:
+                    return None
+                c.execute(f"SELECT id FROM {table} WHERE LOWER(name)=LOWER(?)", (name,))
+                row = c.fetchone()
+                if row:
+                    return row[0]
+                c.execute(f"INSERT INTO {table} (name) VALUES (?)", (name,))
+                return c.lastrowid
+
+            supplier_id = get_or_create_id("suppliers", dob_val)
+            person_id = get_or_create_id("persons", per_val)
+            carrier_id = get_or_create_id("carriers", car_val) if car_val else None
+
             if self.material_id:
                 # Retrieve old quantity first to adjust stock correctly
-                c.execute("SELECT kolicina FROM prejeti_materiali WHERE id=?", (self.material_id,))
-                old_qty = c.fetchone()[0]
-                diff = qty - old_qty
+                c.execute("SELECT kolicina, material_type_id FROM prejeti_materiali WHERE id=?", (self.material_id,))
+                old_row = c.fetchone()
+                old_qty = old_row[0] if old_row else 0
+                old_mt_id = old_row[1] if old_row else None
                 c.execute("""
                     UPDATE prejeti_materiali
                     SET datum_prejema=?,
-                        supplier_id=(SELECT id FROM suppliers WHERE LOWER(name)=LOWER(?)),
-                        carrier_id=(SELECT id FROM carriers WHERE LOWER(name)=LOWER(?)),
+                        supplier_id=?,
+                        carrier_id=?,
                         rok_uporabe=?,
                         embalaza_ok=?,
                         skladisce_ok=?,
                         reklamacije=?,
-                        person_id=(SELECT id FROM persons WHERE LOWER(name)=LOWER(?)),
+                        person_id=?,
                         material_type_id=?,
                         generirana_koda=?,
                         kolicina=?
                     WHERE id=?
-                """, (dd, dob_val, car_val, rok_val, emb_val, sklad_val, rekl_val,
-                      per_val, mt_id, gen_code, qty, self.material_id))
+                """, (dd, supplier_id, carrier_id, rok_val, emb_val, sklad_val, rekl_val,
+                      person_id, mt_id, gen_code, qty, self.material_id))
             else:
                 c.execute("""
                     INSERT INTO prejeti_materiali
@@ -263,34 +278,29 @@ class AddMaterialWindow(tk.Toplevel):
                      skladisce_ok, reklamacije, person_id, material_type_id, generirana_koda, kolicina)
                     VALUES (
                         ?,
-                        (SELECT id FROM suppliers WHERE LOWER(name)=LOWER(?)),
-                        (SELECT id FROM carriers WHERE LOWER(name)=LOWER(?)),
                         ?,
                         ?,
                         ?,
                         ?,
-                        (SELECT id FROM persons WHERE LOWER(name)=LOWER(?)),
+                        ?,
+                        ?,
+                        ?,
                         ?,
                         ?,
                         ?
                     )
-                """, (dd, dob_val, car_val, rok_val, emb_val, sklad_val, rekl_val,
-                      per_val, mt_id, gen_code, qty))
+                """, (dd, supplier_id, carrier_id, rok_val, emb_val, sklad_val, rekl_val,
+                      person_id, mt_id, gen_code, qty))
             conn.commit()
-            # Optional: warn if supplier/carrier/person were not found
-            c.execute("SELECT supplier_id, carrier_id, person_id FROM prejeti_materiali WHERE datum_prejema=? AND generirana_koda=?", (dd, gen_code))
-            row = c.fetchone()
-            if row:
-                sup_id, car_id, per_id = row
-                if sup_id is None and dob_val:
-                    messagebox.showwarning("Opozorilo", f"Dobavitelj '{dob_val}' ne obstaja. Kliknite 'Dodaj novega' ali izberite iz seznama.")
-                if car_id is None and car_val:
-                    messagebox.showwarning("Opozorilo", f"Prevoznik '{car_val}' ne obstaja. Kliknite 'Dodaj novega' ali izberite iz seznama.")
-                if per_id is None and per_val:
-                    messagebox.showwarning("Opozorilo", f"Prejemec '{per_val}' ne obstaja. Kliknite 'Dodaj novega' ali izberite iz seznama.")
         # Update stock: if editing, use diff; if new, add entire qty
         if self.material_id:
-            self.db.update_stock(mt_id, diff)
+            if old_mt_id == mt_id:
+                diff = qty - old_qty
+                self.db.update_stock(mt_id, diff)
+            else:
+                if old_mt_id is not None:
+                    self.db.update_stock(old_mt_id, -old_qty)
+                self.db.update_stock(mt_id, qty)
         else:
             self.db.update_stock(mt_id, qty)
         self.clipboard_clear()
