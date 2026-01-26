@@ -215,17 +215,36 @@ class AddMaterialWindow(tk.Toplevel):
 
     def _setup_autocomplete(self, combobox):
         combobox._full_values = list(combobox.cget("values"))
+        combobox._typed_text = ""
+        combobox.bind("<KeyPress>", lambda event: self._on_combobox_keypress(event, combobox))
         combobox.bind("<KeyRelease>", lambda event: self._on_combobox_typed(event, combobox))
-        combobox.bind("<FocusIn>", lambda event: self._open_combobox_dropdown(combobox))
+        combobox.bind("<<ComboboxSelected>>", lambda event: self._on_combobox_selected(event, combobox))
+        combobox.bind("<FocusIn>", lambda event: self._on_combobox_focus(event, combobox))
+
+    def _on_combobox_focus(self, event, combobox):
+        combobox._typed_text = ""
+
+    def _on_combobox_selected(self, event, combobox):
+        combobox._typed_text = ""
+
+    def _on_combobox_keypress(self, event, combobox):
+        if event.keysym in {"Left", "Right", "Up", "Down", "Tab", "Return", "Escape"}:
+            return
+        if event.keysym == "BackSpace":
+            combobox._typed_text = combobox._typed_text[:-1]
+            return
+        if event.char and event.char.isprintable():
+            combobox._typed_text += event.char
 
     def _on_combobox_typed(self, event, combobox):
         if event.keysym in {"BackSpace", "Left", "Right", "Up", "Down", "Tab", "Return", "Escape"}:
             return
-        typed = combobox.get().strip()
+        typed = combobox._typed_text.strip() or combobox.get().strip()
         if not typed:
             combobox["values"] = combobox._full_values
             return
-        matches = [val for val in combobox._full_values if val.lower().startswith(typed.lower())]
+        typed_lower = typed.lower()
+        matches = [val for val in combobox._full_values if typed_lower in val.lower()]
         if matches:
             combobox["values"] = matches
             self._open_combobox_dropdown(combobox)
@@ -250,6 +269,8 @@ class AddMaterialWindow(tk.Toplevel):
             widget.bind("<Tab>", self._on_tab_press)
 
     def _on_tab_press(self, event):
+        if event.widget in {self.e_datum, self.e_rok}:
+            self._auto_fill_year(event.widget)
         try:
             idx = self._tab_order.index(event.widget)
         except ValueError:
@@ -259,9 +280,12 @@ class AddMaterialWindow(tk.Toplevel):
             next_widget = self._tab_order[idx + 1]
         if next_widget:
             next_widget.focus_set()
-            if isinstance(next_widget, ttk.Combobox):
-                self._open_combobox_dropdown(next_widget)
         return "break"
+
+    def _auto_fill_year(self, entry):
+        value = entry.get().strip()
+        if len(value) == 4 and value.isdigit():
+            entry.insert(tk.END, str(datetime.now().year))
 
     def save_material(self):
         d_val = unify_string(self.e_datum.get().strip())
