@@ -26,54 +26,104 @@ class AddNalogWindow(tk.Toplevel):
         self.old_lot_id = None
         self.moka_category = "Moka"
 
+        self.columnconfigure(0, weight=1)
+        form_frame = ttk.Frame(self)
+        form_frame.grid(row=0, column=0, sticky="n", padx=40, pady=20)
+        form_frame.columnconfigure(0, weight=0)
+        form_frame.columnconfigure(1, weight=1)
+
+        label_width = 24
+        input_width = 42
+
         row = 0
 
-        tk.Label(self, text="Datum dela (ddmmYYYY):").grid(row=row, column=0, sticky="e", padx=10, pady=6)
-        self.e_datum = tk.Entry(self, width=20)
-        self.e_datum.grid(row=row, column=1, padx=10, pady=6)
+        ttk.Label(form_frame, text="Datum dela (ddmmYYYY):", width=label_width, anchor="e").grid(
+            row=row,
+            column=0,
+            sticky="e",
+            padx=10,
+            pady=6,
+        )
+        self.e_datum = ttk.Entry(form_frame, width=input_width)
+        self.e_datum.grid(row=row, column=1, sticky="ew", padx=10, pady=6)
         row += 1
 
-        tk.Label(self, text="Podkategorija (Moka):").grid(row=row, column=0, sticky="e", padx=10, pady=6)
+        ttk.Label(form_frame, text="Podkategorija (Moka):", width=label_width, anchor="e").grid(
+            row=row,
+            column=0,
+            sticky="e",
+            padx=10,
+            pady=6,
+        )
         subs = self.db.get_subcategories(self.moka_category)
-        self.c_sub = ttk.Combobox(self, values=[f"{s[1]} {s[0]}" for s in subs], state="readonly", width=25)
-        self.c_sub.grid(row=row, column=1, padx=10, pady=6)
+        self.c_sub = ttk.Combobox(
+            form_frame,
+            values=[f"{s[1]} {s[0]}" for s in subs],
+            state="readonly",
+            width=input_width,
+        )
+        self.c_sub.grid(row=row, column=1, sticky="ew", padx=10, pady=6)
         self.c_sub.bind("<<ComboboxSelected>>", self.on_sub_select)
         row += 1
 
-        tk.Label(self, text="Zadnji 3 vnosi (Moka):").grid(row=row, column=0, sticky="e", padx=10, pady=6)
-        self.c_mat = ttk.Combobox(self, values=[], state="readonly", width=50)
-        self.c_mat.grid(row=row, column=1, padx=10, pady=6)
+        ttk.Label(form_frame, text="Zadnji 3 vnosi (Moka):", width=label_width, anchor="e").grid(
+            row=row,
+            column=0,
+            sticky="e",
+            padx=10,
+            pady=6,
+        )
+        self.c_mat = ttk.Combobox(form_frame, values=[], state="readonly", width=input_width)
+        self.c_mat.grid(row=row, column=1, sticky="ew", padx=10, pady=6)
         row += 1
 
-        tk.Label(self, text="Oblika izdelka:").grid(row=row, column=0, sticky="e", padx=10, pady=6)
+        ttk.Label(form_frame, text="Oblika izdelka:", width=label_width, anchor="e").grid(
+            row=row,
+            column=0,
+            sticky="e",
+            padx=10,
+            pady=6,
+        )
         shapes = self.db.get_shapes()
         self.c_shape = ttk.Combobox(
-            self,
+            form_frame,
             values=[f"{name} - {abbr}" for name, abbr in shapes],
             state="readonly",
-            width=35,
+            width=input_width,
         )
-        self.c_shape.grid(row=row, column=1, padx=10, pady=6)
+        self.c_shape.grid(row=row, column=1, sticky="ew", padx=10, pady=6)
         row += 1
 
-        tk.Label(self, text="Količina:").grid(row=row, column=0, sticky="e", padx=10, pady=6)
-        self.e_kol = tk.Entry(self, width=10)
-        self.e_kol.grid(row=row, column=1, padx=10, pady=6)
+        ttk.Label(form_frame, text="Količina:", width=label_width, anchor="e").grid(
+            row=row,
+            column=0,
+            sticky="e",
+            padx=10,
+            pady=6,
+        )
+        self.e_kol = ttk.Entry(form_frame, width=input_width)
+        self.e_kol.grid(row=row, column=1, sticky="ew", padx=10, pady=6)
         row += 1
 
-        tk.Label(self, text="Dodatne sestavine:").grid(row=row, column=0, sticky="ne", padx=10, pady=6)
-        self.ingredients_frame = ttk.Frame(self)
-        self.ingredients_frame.grid(row=row, column=1, sticky="w", padx=10, pady=6)
+        ttk.Label(form_frame, text="Dodatne sestavine:", width=label_width, anchor="e").grid(
+            row=row,
+            column=0,
+            sticky="ne",
+            padx=10,
+            pady=6,
+        )
+        self.ingredients_frame = ttk.Frame(form_frame)
+        self.ingredients_frame.grid(row=row, column=1, sticky="ew", padx=10, pady=6)
         self.ingredients = []
         row += 1
 
-        btn_add_ing = ttk.Button(self, text="Dodaj sestavino", command=self.add_ingredient)
+        btn_add_ing = ttk.Button(form_frame, text="Dodaj sestavino", command=self.add_ingredient)
         btn_add_ing.grid(row=row, column=1, sticky="w", padx=10, pady=6)
         btn_add_ing.bind("<Return>", lambda e: btn_add_ing.invoke())
         row += 1
 
         # Frame that spans columns to center the Save/Cancel
-        btn_frame = ttk.Frame(self)
+        btn_frame = ttk.Frame(form_frame)
         btn_frame.grid(row=row, column=0, columnspan=2, pady=18)
         # Optionally force a width to center
         btn_frame.config(width=400)
